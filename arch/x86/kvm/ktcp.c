@@ -89,6 +89,7 @@ int ktcp_send(struct socket *sock, const char *buffer, size_t length,
 		.length = length,
 		.extent = *tx_add,
 	};
+	printk(KERN_DEBUG "%s: txid %d\n", __func__, tx_add->txid);
 	int ret;
 	mm_segment_t oldmm;
 	char *local_buffer = kmalloc(KTCP_BUFFER_SIZE, GFP_KERNEL);
@@ -203,7 +204,7 @@ static struct ktcp_hdr* ktcp_cache_pop(uint16_t txid)
 	struct ktcp_hdr *hdr=NULL;
 	spin_lock(&ktcp_hash_lock);
 	hash_for_each_possible(ktcp_hash, hdr, hlink, txid) {
-		if(txid==hdr->extent.txid)
+		if(txid==hdr->extent.txid || txid==0xFF)
 		{
 			found=1;
 			break;
@@ -226,11 +227,12 @@ int ktcp_receive(struct socket *sock, char* buffer, unsigned long flags,
 	uint16_t txid=tx_add->txid;
 	uint16_t length=0;
 
+	printk(KERN_DEBUG "%s: txid %d\n", __func__, tx_add->txid);
 	//Execute receive_get and cache_get until the right transaction is found
 	do{
 		//Get from network
 		hdr=(struct ktcp_hdr*) __ktcp_receive_get(sock, flags);
-		if(hdr->extent.txid==txid)
+		if(hdr->extent.txid==txid || txid==0xFF)
 		{
 			//if found, we exit the loop
 			break;
@@ -244,12 +246,14 @@ int ktcp_receive(struct socket *sock, char* buffer, unsigned long flags,
 
 	}while(hdr==NULL);//What if we never receive the transaction?
 
-	BUG_ON(!hdr || hdr->extent.txid!=txid);
+	BUG_ON(!hdr || (hdr->extent.txid!=txid && txid!=0xFF));
+
+	printk(KERN_DEBUG "%s: txid requested %d found %d\n", __func__, txid, hdr->extent.txid);
 	
 	length = hdr->length;
 	/* hdr.length is undetermined on process killed */
 	if (unlikely(length > PAGE_SIZE)) {
-		printk("%s: buffer to small\n", __func__);
+		printk(KERN_WARNING "%s: buffer to small\n", __func__);
 		ret = -EFAULT;
 		goto out;
 	}
@@ -277,7 +281,7 @@ int ktcp_connect(const char *host, const char *port, struct socket **conn_socket
 
 	ret = sock_create(PF_INET, SOCK_STREAM, IPPROTO_TCP, conn_socket);
 	if (ret < 0) {
-		printk("sock_create %d\n", ret);
+		printk(KERN_DEBUG "sock_create %d\n", ret);
 		return ret;
 	}
 
@@ -295,7 +299,7 @@ re_connect:
 	}
 
 	if (ret && (ret != -EINPROGRESS)) {
-		printk("connect %d\n", ret);
+		printk(KERN_DEBUG "connect %d\n", ret);
 		sock_release(*conn_socket);
 		return ret;
 	}
