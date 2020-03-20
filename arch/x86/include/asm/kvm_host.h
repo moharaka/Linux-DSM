@@ -670,8 +670,8 @@ struct kvm_lpage_info {
 #define KVM_DSM_DEBUG
 
 /* TODO: Make TCP interfaces compatible. */
-//#define USE_KTCP_NETWORK
-#define USE_KRDMA_NETWORK
+#define USE_KTCP_NETWORK
+//#define USE_KRDMA_NETWORK
 
 #define IVY_KVM_DSM
 //#define TARDIS_KVM_DSM
@@ -704,7 +704,7 @@ typedef uint32_t version_t;
 typedef uint32_t timestamp_t;
 
 #define KVM_DSM_W_SHARED
-#define KVM_DSM_DIFF
+//#define KVM_DSM_DIFF
 #define KVM_DSM_PF_PROFILE
 
 #define DSM_MAX_INSTANCES 16

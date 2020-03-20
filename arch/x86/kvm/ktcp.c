@@ -27,12 +27,14 @@
 #include <linux/socket.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
+#include <linux/kvm_host.h>
 
 #include "ktcp.h"
 
 struct ktcp_hdr {
-	extent_t extent;
+	tx_add_t extent;
 	uint16_t length;
+	struct hlist_node hlink;//FIXME: don't send through network
 } __attribute__((packed));
 
 #define KTCP_BUFFER_SIZE (sizeof(struct ktcp_hdr) + PAGE_SIZE)
@@ -81,11 +83,11 @@ repeat_send:
 }
 
 int ktcp_send(struct socket *sock, const char *buffer, size_t length,
-		unsigned long flags, extent_t extent)
+		unsigned long flags, const tx_add_t * tx_add)
 {
 	struct ktcp_hdr hdr = {
 		.length = length,
-		.extent = extent,
+		.extent = *tx_add,
 	};
 	int ret;
 	mm_segment_t oldmm;
@@ -93,6 +95,8 @@ int ktcp_send(struct socket *sock, const char *buffer, size_t length,
 	if (!local_buffer) {
 		return -ENOMEM;
 	}
+
+	BUG_ON((length  + sizeof(hdr)) > KTCP_BUFFER_SIZE);
 
 	// Get current address access limit
 	oldmm = get_fs();
@@ -112,7 +116,7 @@ out:
 	return ret < 0 ? ret : hdr.length;
 }
 
-static int __ktcp_receive(struct socket *sock, char *buffer, size_t expected_size,
+static int __ktcp_receive__(struct socket *sock, char *buffer, size_t expected_size,
 		unsigned long flags)
 {
 	struct kvec vec;
@@ -162,38 +166,103 @@ read_again:
 	return len;
 }
 
-int ktcp_receive(struct socket *sock, char *buffer, unsigned long flags,
-		extent_t *extent)
+//Allocate a buffer and store the any received message
+static struct ktcp_hdr*  __ktcp_receive_get(struct socket *sock, unsigned long flags)
 {
-	struct ktcp_hdr hdr;
 	int ret;
 	char *local_buffer = kmalloc(KTCP_BUFFER_SIZE, GFP_KERNEL);
 	if (!local_buffer) {
-		return -ENOMEM;
+		return NULL;
 	}
 
-	hdr.length = 0xDEAD;
-	ret = __ktcp_receive(sock, local_buffer, KTCP_BUFFER_SIZE, flags);
+	ret = __ktcp_receive__(sock, local_buffer, KTCP_BUFFER_SIZE, flags);
 	if (ret < 0) {
-		goto out;
+		return NULL;
 	}
 
-	memcpy(&hdr, local_buffer, sizeof(hdr));
+	return (struct ktcp_hdr*) local_buffer;
+}
 
+#define BLOCKED_HASH_BITS	7
+static DEFINE_HASHTABLE(ktcp_hash, BLOCKED_HASH_BITS);
+static DEFINE_SPINLOCK(ktcp_hash_lock);
+
+static void ktcp_cache_put(uint16_t txid, struct ktcp_hdr* hdr)
+{
+
+	spin_lock(&ktcp_hash_lock);
+
+	hash_add(ktcp_hash, &hdr->hlink, hdr->extent.txid);
+
+	spin_unlock(&ktcp_hash_lock);
+}
+
+static struct ktcp_hdr* ktcp_cache_pop(uint16_t txid)
+{
+	int found=0;
+	struct ktcp_hdr *hdr=NULL;
+	spin_lock(&ktcp_hash_lock);
+	hash_for_each_possible(ktcp_hash, hdr, hlink, txid) {
+		if(txid==hdr->extent.txid)
+		{
+			found=1;
+			break;
+		}
+	}
+	if(found)
+		hash_del(&hdr->hlink);
+	else
+		hdr=NULL;
+	spin_unlock(&ktcp_hash_lock);
+	return hdr;
+}
+
+//and return the corresponding local_buffer
+int ktcp_receive(struct socket *sock, char* buffer, unsigned long flags, 
+			tx_add_t *tx_add)
+{
+	int ret=0;
+	struct ktcp_hdr *hdr;
+	uint16_t txid=tx_add->txid;
+	uint16_t length=0;
+
+	//Execute receive_get and cache_get until the right transaction is found
+	do{
+		//Get from network
+		hdr=(struct ktcp_hdr*) __ktcp_receive_get(sock, flags);
+		if(hdr->extent.txid==txid)
+		{
+			//if found, we exit the loop
+			break;
+		}
+
+		//add local buffer to the cache
+		ktcp_cache_put(txid, hdr); hdr=NULL;
+
+		//check if not already in the cache (putted by another thread)
+		hdr=ktcp_cache_pop(txid);
+
+	}while(hdr==NULL);//What if we never receive the transaction?
+
+	BUG_ON(!hdr || hdr->extent.txid!=txid);
+	
+	length = hdr->length;
 	/* hdr.length is undetermined on process killed */
-	if (unlikely(hdr.length > PAGE_SIZE)) {
+	if (unlikely(length > PAGE_SIZE)) {
+		printk("%s: buffer to small\n", __func__);
 		ret = -EFAULT;
 		goto out;
 	}
-	memcpy(buffer, local_buffer + sizeof(hdr), hdr.length);
 
-	if (extent) {
-		*extent = hdr.extent;
+	memcpy(buffer, (char*)hdr + sizeof(hdr), length);
+
+	if (tx_add) {
+		*tx_add = hdr->extent;
 	}
 
 out:
-	kfree(local_buffer);
-	return ret < 0 ? ret : hdr.length;
+	kfree(hdr); hdr=NULL;
+	return ret < 0 ? ret : length;
 }
 
 int ktcp_connect(const char *host, const char *port, struct socket **conn_socket)
@@ -239,8 +308,7 @@ int ktcp_listen(const char *host, const char *port, struct socket **listen_socke
 	struct sockaddr_in saddr;
 	long portdec;
 
-	BUILD_BUG_ON((sizeof(struct ktcp_hdr)) != (sizeof(uint16_t) +
-				sizeof(extent_t)));
+	//BUILD_BUG_ON((sizeof(struct ktcp_hdr)) != (sizeof(uint16_t) + sizeof(extent_t)));
 
 	ret = sock_create(PF_INET, SOCK_STREAM, IPPROTO_TCP, listen_socket);
 	if (ret != 0) {
