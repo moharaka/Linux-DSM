@@ -89,10 +89,13 @@ int ktcp_send(struct socket *sock, const char *buffer, size_t length,
 		.length = length,
 		.extent = *tx_add,
 	};
-	printk(KERN_DEBUG "%s: txid %d\n", __func__, tx_add->txid);
 	int ret;
 	mm_segment_t oldmm;
-	char *local_buffer = kmalloc(KTCP_BUFFER_SIZE, GFP_KERNEL);
+	char *local_buffer;
+
+	printk(KERN_DEBUG "%s: txid %d\n", __func__, tx_add->txid);
+
+	local_buffer = kmalloc(KTCP_BUFFER_SIZE, GFP_KERNEL);
 	if (!local_buffer) {
 		return -ENOMEM;
 	}
@@ -190,7 +193,6 @@ static DEFINE_SPINLOCK(ktcp_hash_lock);
 
 static void ktcp_cache_put(uint16_t txid, struct ktcp_hdr* hdr)
 {
-
 	spin_lock(&ktcp_hash_lock);
 
 	hash_add(ktcp_hash, &hdr->hlink, hdr->extent.txid);
@@ -232,6 +234,7 @@ int ktcp_receive(struct socket *sock, char* buffer, unsigned long flags,
 	do{
 		//Get from network
 		hdr=(struct ktcp_hdr*) __ktcp_receive_get(sock, flags);
+#if 0
 		if(hdr->extent.txid==txid || txid==0xFF)
 		{
 			//if found, we exit the loop
@@ -245,8 +248,11 @@ int ktcp_receive(struct socket *sock, char* buffer, unsigned long flags,
 		hdr=ktcp_cache_pop(txid);
 
 	}while(hdr==NULL);//What if we never receive the transaction?
-
 	BUG_ON(!hdr || (hdr->extent.txid!=txid && txid!=0xFF));
+#else
+	}while(0);
+#endif
+
 
 	printk(KERN_DEBUG "%s: txid requested %d found %d\n", __func__, txid, hdr->extent.txid);
 	
