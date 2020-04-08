@@ -6136,6 +6136,13 @@ void kvm_vcpu_deactivate_apicv(struct kvm_vcpu *vcpu)
 	kvm_x86_ops->refresh_apicv_exec_ctrl(vcpu);
 }
 
+void kvm_pv_print_stdout(struct kvm_vcpu *vcpu, 
+				unsigned long a0, unsigned long a1,
+				unsigned long a2, unsigned long a3)
+{
+	printk(KERN_INFO "id %d a0 %lx a1 0x%lx a2 0x%lx a3 0x%lx", vcpu->vcpu_id, a0, a1, a2, a3);
+}
+
 int kvm_emulate_hypercall(struct kvm_vcpu *vcpu)
 {
 	unsigned long nr, a0, a1, a2, a3, ret;
@@ -6174,6 +6181,10 @@ int kvm_emulate_hypercall(struct kvm_vcpu *vcpu)
 		break;
 	case KVM_HC_KICK_CPU:
 		kvm_pv_kick_cpu_op(vcpu->kvm, a0, a1);
+		ret = 0;
+		break;
+	case KVM_HC_PRINT_STDOUT:
+		kvm_pv_print_stdout(vcpu, a0, a1, a2, a3);
 		ret = 0;
 		break;
 	default:

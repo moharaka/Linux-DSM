@@ -94,7 +94,7 @@ int ktcp_send(struct socket *sock, const char *buffer, size_t length,
 	mm_segment_t oldmm;
 	char *local_buffer;
 
-	printk(KERN_DEBUG "%s: txid %d\n", __func__, tx_add->txid);
+	printk(KERN_DEBUG "%s:%d: txid %d started\n", __func__, current->pid, tx_add->txid);
 
 	local_buffer = kmalloc(KTCP_BUFFER_SIZE, GFP_KERNEL);
 	if (!local_buffer) {
@@ -171,6 +171,8 @@ read_again:
 	return len;
 }
 
+//static DEFINE_SEMAPHORE(receive_lock);
+
 //Allocate a buffer and store the any received message
 static struct ktcp_hdr*  __ktcp_receive_get(struct socket *sock, unsigned long flags)
 {
@@ -180,7 +182,9 @@ static struct ktcp_hdr*  __ktcp_receive_get(struct socket *sock, unsigned long f
 		return NULL;
 	}
 
+	printk(KERN_DEBUG "%s:%d:  lock held\n", __func__, current->pid);
 	ret = __ktcp_receive__(sock, local_buffer, KTCP_BUFFER_SIZE, flags);
+	printk(KERN_DEBUG "%s:%d: lock releasedheld\n", __func__, current->pid);
 	if (ret < 0) {
 		return NULL;
 	}
@@ -236,20 +240,25 @@ static struct ktcp_hdr* ktcp_cache_pop(uint16_t txid)
 }
 #endif
 
+
 //and return the corresponding local_buffer
-int ktcp_receive(struct socket *sock, char* buffer, unsigned long flags, 
+int ktcp_receive(kconnection_t *conn, char* buffer, unsigned long flags, 
 			tx_add_t *tx_add)
 {
 	int ret=0;
 	struct ktcp_hdr *hdr;
 	uint16_t txid=tx_add->txid;
 	uint16_t length=0;
+	struct socket *sock=&conn->sock;
+	struct sema *sema=&conn->sema;
 
-	//printk(KERN_DEBUG "%s: txid %d\n", __func__, tx_add->txid);
+	printk(KERN_DEBUG "%s:%d: txid %d started\n", __func__, current->pid, tx_add->txid);
 	//Execute receive_get and cache_get until the right transaction is found
 	do{
 		//Get from network
+		down(&receive_lock);
 		hdr=(struct ktcp_hdr*) __ktcp_receive_get(sock, flags);
+		up(&receive_lock);
 #ifdef USE_CACHE
 		if(hdr->extent.txid==txid || txid==0xFF)
 		{
@@ -363,7 +372,7 @@ int ktcp_listen(const char *host, const char *port, struct socket **listen_socke
 	return SUCCESS;
 }
 
-int ktcp_accept(struct socket *listen_socket, struct socket **accept_socket, unsigned long flag)
+int ktcp_accept(kconnection_t *conn, struct socket **accept_socket, unsigned long flag)
 {
 	int ret;
 

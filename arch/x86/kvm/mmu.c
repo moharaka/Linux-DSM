@@ -3827,6 +3827,15 @@ void kvm_dsm_apply_access_right(struct kvm *kvm,
 }
 #endif
 
+#if 0
+static gva_t __get_gva(struct kvm_vcpu *vcpu, gva_t gpa)
+{
+	return kvm_read_cr2(vcpu);
+	//return vcpu->arch.cr2;
+	//dsm_debug_v("kvm[%d]-cpu[%d] CR3 %lx\n", vcpu->kvm->arch.dsm_id, vcpu->vcpu_id, cr3);
+}
+#endif
+
 static int tdp_page_fault(struct kvm_vcpu *vcpu, gva_t gpa, u32 error_code,
 			  bool prefault)
 {
@@ -3878,9 +3887,10 @@ static int tdp_page_fault(struct kvm_vcpu *vcpu, gva_t gpa, u32 error_code,
 		return r;
 
 #ifdef CONFIG_KVM_DSM
-	dsm_debug_v("kvm[%d]-cpu[%d] #pf[%lx,%x](%s) gfn[%llu,%d] host_writable[%d]\n",
-			vcpu->kvm->arch.dsm_id, vcpu->vcpu_id, gpa, error_code,
-			write ? "W" : (error_code & PFERR_FETCH_MASK ? "RI" : "R"),
+	dsm_debug_v("kvm[%d]-cpu[%d] #pf[%lx,%x](%s) rip[%lx] gpa[%llu,%d] host_writable[%d]\n",
+			vcpu->kvm->arch.dsm_id, vcpu->vcpu_id, 
+			gpa, error_code, write ? "W" : (error_code & PFERR_FETCH_MASK ? "RI" : "R"),
+			kvm_rip_read(vcpu),
 			gfn, is_smm(vcpu), map_writable);
 #endif
 

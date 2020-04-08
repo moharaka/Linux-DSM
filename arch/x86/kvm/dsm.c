@@ -22,7 +22,7 @@
 #include <linux/mmu_context.h>
 
 #ifdef KVM_DSM_DEBUG
-bool kvm_dsm_dbg_verbose = 0;
+bool kvm_dsm_dbg_verbose = 1;
 #endif
 
 static int kvm_dsm_page_fault(struct kvm *kvm, struct kvm_memory_slot *memslot,
