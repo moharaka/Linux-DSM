@@ -680,15 +680,9 @@ struct kvm_lpage_info {
 extern bool kvm_dsm_dbg_verbose;
 #endif
 
-struct ktcp_cb
-{
-	struct socket sock;
-	struct semaphore lock;
-};
-
 #ifdef USE_KTCP_NETWORK
 	#include "ktcp.h"
-	typedef struct ktcp_cb kconnection_t;
+	typedef struct socket kconnection_t;
 #endif
 
 #ifdef USE_KRDMA_NETWORK
