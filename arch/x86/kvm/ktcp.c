@@ -40,6 +40,53 @@ struct ktcp_hdr {
 
 #define KTCP_BUFFER_SIZE (sizeof(struct ktcp_hdr) + PAGE_SIZE)
 
+#define BLOCKED_HASH_BITS	7
+static DEFINE_HASHTABLE(ktcp_hash, BLOCKED_HASH_BITS);
+static DEFINE_SPINLOCK(ktcp_hash_lock);
+
+struct ktcp_cache_entry_s
+{
+	struct ktcp_hdr* hdr;
+	struct hlist_node hlink;
+};
+
+static void ktcp_cache_put(uint16_t txid, struct ktcp_hdr* hdr)
+{
+ 	struct ktcp_cache_entry_s *entry;
+	entry = kmalloc(sizeof(struct ktcp_cache_entry_s), GFP_KERNEL);
+	entry->hdr=hdr;
+
+	spin_lock(&ktcp_hash_lock);
+	hash_add(ktcp_hash, &entry->hlink, hdr->extent.txid);
+	spin_unlock(&ktcp_hash_lock);
+}
+
+static struct ktcp_hdr* ktcp_cache_pop(uint16_t txid)
+{
+	int found=0;
+	struct ktcp_hdr *hdr=NULL;
+	struct ktcp_cache_entry_s *entry=NULL;
+
+	spin_lock(&ktcp_hash_lock);
+	hash_for_each_possible(ktcp_hash, entry, hlink, txid) {
+		hdr=entry->hdr;
+		if(txid==hdr->extent.txid || txid==0xFF)
+		{
+			found=1;
+			printk(KERN_DEBUG "%s:%d:  found in cache\n", __func__,hdr->extent.txid);
+			break;
+		}
+	}
+	if(found)
+		hash_del(&entry->hlink);
+	else
+		hdr=NULL;
+	spin_unlock(&ktcp_hash_lock);
+
+	kfree(entry); entry=NULL;
+	return hdr;
+}
+
 static int __ktcp_send(struct socket *sock, const char *buffer, size_t length,
 		unsigned long flags)
 {
@@ -258,54 +305,6 @@ static struct ktcp_hdr*  __ktcp_receive_get(struct socket *sock, unsigned long f
 	return (struct ktcp_hdr*) local_buffer;
 }
 
-#ifdef USE_CACHE
-#define BLOCKED_HASH_BITS	7
-static DEFINE_HASHTABLE(ktcp_hash, BLOCKED_HASH_BITS);
-static DEFINE_SPINLOCK(ktcp_hash_lock);
-
-struct ktcp_cache_entry_s
-{
-	struct ktcp_hdr* hdr;
-	struct hlist_node hlink;
-};
-
-static void ktcp_cache_put(uint16_t txid, struct ktcp_hdr* hdr)
-{
- 	struct ktcp_cache_entry_s *entry;
-	entry = kmalloc(sizeof(struct ktcp_cache_entry_s), GFP_KERNEL);
-	entry->hdr=hdr;
-
-	spin_lock(&ktcp_hash_lock);
-	hash_add(ktcp_hash, &entry->hlink, hdr->extent.txid);
-	spin_unlock(&ktcp_hash_lock);
-}
-
-static struct ktcp_hdr* ktcp_cache_pop(uint16_t txid)
-{
-	int found=0;
-	struct ktcp_hdr *hdr=NULL;
-	struct ktcp_cache_entry_s *entry=NULL;
-
-	spin_lock(&ktcp_hash_lock);
-	hash_for_each_possible(ktcp_hash, entry, hlink, txid) {
-		hdr=entry->hdr;
-		if(txid==hdr->extent.txid || txid==0xFF)
-		{
-			found=1;
-			printk(KERN_DEBUG "%s:%d:  found in cache\n", __func__,hdr->extent.txid);
-			break;
-		}
-	}
-	if(found)
-		hash_del(&entry->hlink);
-	else
-		hdr=NULL;
-	spin_unlock(&ktcp_hash_lock);
-
-	kfree(entry); entry=NULL;
-	return hdr;
-}
-#endif
 
 
 //and return the corresponding local_buffer
