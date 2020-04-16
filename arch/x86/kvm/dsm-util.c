@@ -216,7 +216,9 @@ void dsm_decode_diff(char *page, int resp_len,
 	kfree(buffer);
 #else
 	if(resp_len != 0 && resp_len != PAGE_SIZE)
+	{
 		printk(KERN_WARNING "%s: response length unexpected %d\n", __func__, resp_len);
+	}
 	BUG_ON(resp_len != 0 && resp_len != PAGE_SIZE);
 #endif
 }

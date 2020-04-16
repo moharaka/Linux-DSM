@@ -50,6 +50,8 @@ struct ktcp_cache_entry_s
 	struct hlist_node hlink;
 };
 
+DEFINE_SEMAPHORE(cache_sema);
+
 static void ktcp_cache_put(uint16_t txid, struct ktcp_hdr* hdr)
 {
  	struct ktcp_cache_entry_s *entry;
@@ -59,16 +61,19 @@ static void ktcp_cache_put(uint16_t txid, struct ktcp_hdr* hdr)
 	spin_lock(&ktcp_hash_lock);
 	hash_add(ktcp_hash, &entry->hlink, hdr->extent.txid);
 	spin_unlock(&ktcp_hash_lock);
+	up(&cache_sema);
 }
 
 static struct ktcp_hdr* ktcp_cache_pop(uint16_t txid)
 {
 	int found=0;
+	int bkt;
 	struct ktcp_hdr *hdr=NULL;
 	struct ktcp_cache_entry_s *entry=NULL;
 
+	down(&cache_sema);
 	spin_lock(&ktcp_hash_lock);
-	hash_for_each_possible(ktcp_hash, entry, hlink, txid) {
+	hash_for_each(ktcp_hash, bkt, entry, hlink) {
 		hdr=entry->hdr;
 		if(txid==hdr->extent.txid || txid==0xFF)
 		{
@@ -83,51 +88,19 @@ static struct ktcp_hdr* ktcp_cache_pop(uint16_t txid)
 		hdr=NULL;
 	spin_unlock(&ktcp_hash_lock);
 
+	if(!found)
+		up(&cache_sema);
+
 	kfree(entry); entry=NULL;
 	return hdr;
 }
 
-static int __ktcp_send(struct socket *sock, const char *buffer, size_t length,
-		unsigned long flags)
+static int __ktcp_send(struct socket *sock, const char *buffer,
+				size_t length, unsigned long flags)
 {
-	struct kvec vec;
-	int len, written = 0, left = length;
-	int ret;
-
-	struct msghdr msg = {
-		.msg_name    = 0,
-		.msg_namelen = 0,
-		.msg_control = NULL,
-		.msg_controllen = 0,
-		.msg_flags   = flags,
-	};
-
-repeat_send:
-	vec.iov_len = left;
-	vec.iov_base = (char *)buffer + written;
-
-	len = kernel_sendmsg(sock, &msg, &vec, 1, left);
-	if (len == -EAGAIN || len == -ERESTARTSYS) {
-		goto repeat_send;
-	}
-	if (len > 0) {
-		written += len;
-		left -= len;
-		if (left != 0) {
-			goto repeat_send;
-		}
-	}
-
-	ret = written != 0 ? written : len;
-	if (ret > 0 && ret != length) {
-		printk(KERN_WARNING "ktcp_send send %d bytes which expected_size=%lu bytes", ret, length);
-	}
-
-	if (ret < 0) {
-		printk(KERN_ERR "ktcp_send %d", ret);
-	}
-
-	return ret;
+	struct ktcp_hdr* hdr = (struct ktcp_hdr*) buffer;
+	ktcp_cache_put(hdr->extent.txid, hdr); 
+	return 0;
 }
 
 int ktcp_send(struct socket *sock, const char *buffer, size_t length,
@@ -138,7 +111,7 @@ int ktcp_send(struct socket *sock, const char *buffer, size_t length,
 		.extent = *tx_add,
 	};
 	int ret;
-	mm_segment_t oldmm;
+	//mm_segment_t oldmm;
 	char *local_buffer;
 
 	printk(KERN_DEBUG "%s:%d: txid %d started\n", __func__, current->pid, tx_add->txid);
@@ -151,8 +124,8 @@ int ktcp_send(struct socket *sock, const char *buffer, size_t length,
 	BUG_ON((length  + sizeof(hdr)) > KTCP_BUFFER_SIZE);
 
 	// Get current address access limit
-	oldmm = get_fs();
-	set_fs(KERNEL_DS);
+	//oldmm = get_fs();
+	//set_fs(KERNEL_DS);
 
 	memcpy(local_buffer, &hdr, sizeof(hdr));
 	memcpy(local_buffer + sizeof(hdr), buffer, length);
@@ -163,146 +136,9 @@ int ktcp_send(struct socket *sock, const char *buffer, size_t length,
 
 out:
 	// Retrieve address access limit
-	set_fs(oldmm);
-	kfree(local_buffer);
+	//set_fs(oldmm);
+	//kfree(local_buffer);
 	return ret < 0 ? ret : hdr.length;
-}
-
-static int __ktcp_receive__(struct socket *sock, char *buffer, size_t expected_size,
-		unsigned long flags)
-{
-	struct kvec vec;
-	int ret;
-	int len = 0;
-
-	struct msghdr msg = {
-		.msg_name    = 0,
-		.msg_namelen = 0,
-		.msg_control = NULL,
-		.msg_controllen = 0,
-		.msg_flags   = flags,
-	};
-
-	if (expected_size == 0) {
-		return 0;
-	}
-
-read_again:
-	vec.iov_len = expected_size - len;
-	vec.iov_base = buffer + len;
-	ret = kernel_recvmsg(sock, &msg, &vec, 1, expected_size - len, flags);
-
-	if (ret == 0) {
-		return len;
-	}
-
-	// Non-blocking on the first try
-	if (len == 0 && (flags & SOCK_NONBLOCK) &&
-			(ret == -EWOULDBLOCK || ret == -EAGAIN)) {
-		return ret;
-	}
-
-	if (ret == -EAGAIN || ret == -ERESTARTSYS) {
-		goto read_again;
-	}
-	else if (ret < 0) {
-		printk(KERN_ERR "kernel_recvmsg %d", ret);
-		return ret;
-	}
-	len += ret;
-	if (len != expected_size) {
-		printk(KERN_WARNING "ktcp_receive receive %d bytes which expected_size=%lu bytes, read again", len, expected_size);
-		goto read_again;
-	}
-
-	return len;
-}
-
-//static DEFINE_SEMAPHORE(receive_lock);
-#define BLOCKED_HASH_BITS	7
-static DEFINE_HASHTABLE(ktcp_sema_hash, BLOCKED_HASH_BITS);
-static DEFINE_SPINLOCK(ktcp_sema_hash_lock);
-
-struct ktcp_semaphore_s
-{
-	long sock;
-	struct semaphore sema;
-	struct hlist_node hlink;
-};
-
-static struct semaphore* ktcp_sema_put(long sock)//uint16_t txid, struct ktcp_hdr* hdr)
-{
- 	struct ktcp_semaphore_s *entry;
-	entry = kmalloc(sizeof(struct ktcp_semaphore_s), GFP_KERNEL);
-	entry->sock=sock;
-	sema_init(&entry->sema, 1);
-
-	spin_lock(&ktcp_sema_hash_lock);
-	hash_add(ktcp_sema_hash, &entry->hlink, sock);
-	spin_unlock(&ktcp_sema_hash_lock);
-
-	return &entry->sema;
-}
-
-static struct semaphore* ktcp_sema_get(long sock)
-{
-	int found=0;
-	struct ktcp_semaphore_s *entry=NULL;
-
-	spin_lock(&ktcp_sema_hash_lock);
-	hash_for_each_possible(ktcp_sema_hash, entry, hlink, (long) sock) {
-		if(sock==entry->sock)
-		{
-			found=1;
-			break;
-		}
-	}
-	spin_unlock(&ktcp_sema_hash_lock);
-
-	if(!found)
-		return NULL;
-
-	return &entry->sema;
-}
-static struct semaphore* get_lock(long sock)
-{
-	struct semaphore *sema=ktcp_sema_get((long)sock);
-	if(!sema)
-		sema=ktcp_sema_put((long)sock);
-	return sema;
-}
-
-static void lock_receiver(struct socket* sock)
-{
-	struct semaphore *sema=get_lock((long)sock);
-	down(sema);
-	//down(&receive_lock);
-}
-
-static void unlock_receiver(struct socket *sock)
-{
-	struct semaphore *sema=get_lock((long)sock);
-	up(sema);
-	//up(&receive_lock);
-}
-
-//Allocate a buffer and store the any received message
-static struct ktcp_hdr*  __ktcp_receive_get(struct socket *sock, unsigned long flags)
-{
-	int ret;
-	char *local_buffer = kmalloc(KTCP_BUFFER_SIZE, GFP_KERNEL);
-	if (!local_buffer) {
-		return NULL;
-	}
-
-	lock_receiver(sock);
-	ret = __ktcp_receive__(sock, local_buffer, KTCP_BUFFER_SIZE, flags);
-	unlock_receiver(sock);
-	if (ret < 0) {
-		return NULL;
-	}
-
-	return (struct ktcp_hdr*) local_buffer;
 }
 
 
@@ -319,26 +155,11 @@ int ktcp_receive(struct socket *sock, char* buffer, unsigned long flags,
 	printk(KERN_DEBUG "%s:%d: txid %d started\n", __func__, current->pid, tx_add->txid);
 	//Execute receive_get and cache_get until the right transaction is found
 	do{
-		//Get from network
-		hdr=(struct ktcp_hdr*) __ktcp_receive_get(sock, flags);
-#ifdef USE_CACHE
-		if(hdr->extent.txid==txid || txid==0xFF)
-		{
-			//if found, we exit the loop
-			break;
-		}
-
-		//add local buffer to the cache
-		ktcp_cache_put(txid, hdr); hdr=NULL;
-
-		//check if not already in the cache (putted by another thread)
 		hdr=ktcp_cache_pop(txid);
+		//udelay(100);
+	}while(hdr==NULL);
 
-	}while(hdr==NULL);//What if we never receive the transaction?
 	BUG_ON(!hdr || (hdr->extent.txid!=txid && txid!=0xFF));
-#else
-	}while(0);
-#endif
 
 	printk(KERN_DEBUG "%s: txid requested %d found %d\n", __func__, txid, hdr->extent.txid);
 	
@@ -350,7 +171,7 @@ int ktcp_receive(struct socket *sock, char* buffer, unsigned long flags,
 		goto out;
 	}
 
-	memcpy(buffer, (char*)hdr + sizeof(hdr), length);
+	memcpy(buffer, (char*)hdr + sizeof(*hdr), length);
 
 	if (tx_add) {
 		*tx_add = hdr->extent;
