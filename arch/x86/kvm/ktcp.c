@@ -103,6 +103,7 @@ static int __ktcp_send(struct socket *sock, const char *buffer,
 	return 0;
 }
 
+#define RESP_FLAG 0x8000
 int ktcp_send(struct socket *sock, const char *buffer, size_t length,
 		unsigned long flags, const tx_add_t * tx_add)
 {
@@ -112,9 +113,11 @@ int ktcp_send(struct socket *sock, const char *buffer, size_t length,
 	};
 	int ret;
 	//mm_segment_t oldmm;
-	char *local_buffer;
+	char *local_buffer=NULL;
 
-	printk(KERN_DEBUG "%s:%d: txid %d started\n", __func__, current->pid, tx_add->txid);
+	printk(KERN_DEBUG "%s:%d: txid %d wf %d length %ld\n", __func__, current->pid, tx_add->txid, tx_add->txid^RESP_FLAG, length);
+
+	hdr.extent.txid^=RESP_FLAG;
 
 	local_buffer = kmalloc(KTCP_BUFFER_SIZE, GFP_KERNEL);
 	if (!local_buffer) {
@@ -148,7 +151,7 @@ int ktcp_receive(struct socket *sock, char* buffer, unsigned long flags,
 			tx_add_t *tx_add)
 {
 	int ret=0;
-	struct ktcp_hdr *hdr;
+	struct ktcp_hdr *hdr=NULL;
 	uint16_t txid=tx_add->txid;
 	uint16_t length=0;
 
@@ -161,9 +164,11 @@ int ktcp_receive(struct socket *sock, char* buffer, unsigned long flags,
 
 	BUG_ON(!hdr || (hdr->extent.txid!=txid && txid!=0xFF));
 
-	printk(KERN_DEBUG "%s: txid requested %d found %d\n", __func__, txid, hdr->extent.txid);
-	
 	length = hdr->length;
+
+	printk(KERN_DEBUG "%s: txid requested %d found %d length %d\n", 
+				__func__, txid, hdr->extent.txid, length);
+	
 	/* hdr.length is undetermined on process killed */
 	if (unlikely(length > PAGE_SIZE)) {
 		printk(KERN_WARNING "%s: buffer to small\n", __func__);
