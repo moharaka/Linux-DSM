@@ -726,7 +726,7 @@ typedef struct tx_add {
 	 * (Hopefully) unique transcation id, which is used to eliminate the
 	 * necessity of per-socket locks.
 	 */
-	uint16_t txid;
+	uint32_t txid;
 } tx_add_t;
 
 struct kvm_dsm_info {

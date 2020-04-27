@@ -78,10 +78,10 @@ static inline uint16_t generate_txid(struct kvm *kvm, uint16_t dest_id)
 	/* TODO: currently only 4 nodes are supported here. */
 	static atomic_t id[44] = { ATOMIC_INIT(0) };
 
-	uint16_t r = 0;
+	uint32_t r = 0;
 	do {
-		r =  (uint16_t)atomic_add_return(1, &id[kvm->arch.dsm_id * 10 + dest_id]);
-	} while (r == 0xFF);
+		r =  (uint32_t)atomic_add_return(1, &id[kvm->arch.dsm_id * 10 + dest_id]);
+	} while (r == 0xFFFFFFFF);
 
 	return r;
 }

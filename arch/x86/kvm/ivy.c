@@ -457,7 +457,7 @@ int ivy_kvm_dsm_handle_req(void *data)
 	while (1) {
 		tx_add_t tx_add = {
 			/* Accept any incoming requests. */
-			.txid = 0xFF,
+			.txid = 0xFFFFFFFF,
 		};
 
 		if (kthread_should_stop()) {

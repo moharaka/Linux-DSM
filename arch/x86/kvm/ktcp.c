@@ -33,6 +33,73 @@
 
 #define USE_CACHE
 
+#define BLOCKED_HASH_BITS	7
+static DEFINE_HASHTABLE(ktcp_sema_hash, BLOCKED_HASH_BITS);
+static DEFINE_SPINLOCK(ktcp_sema_hash_lock);
+
+struct ktcp_semaphore_s
+{
+	long sock;
+	struct semaphore sema;
+	struct hlist_node hlink;
+};
+
+static struct semaphore* ktcp_sema_put(long sock)
+{
+ 	struct ktcp_semaphore_s *entry;
+	entry = kmalloc(sizeof(struct ktcp_semaphore_s), GFP_KERNEL);
+	entry->sock=sock;
+	sema_init(&entry->sema, 0);
+
+	spin_lock(&ktcp_sema_hash_lock);
+	hash_add(ktcp_sema_hash, &entry->hlink, sock);
+	spin_unlock(&ktcp_sema_hash_lock);
+
+	return &entry->sema;
+}
+
+static struct semaphore* ktcp_sema_get(long sock)
+{
+	int found=0;
+	struct ktcp_semaphore_s *entry=NULL;
+
+	spin_lock(&ktcp_sema_hash_lock);
+	hash_for_each_possible(ktcp_sema_hash, entry, hlink, (long) sock) {
+		if(sock==entry->sock)
+		{
+			found=1;
+			break;
+		}
+	}
+	spin_unlock(&ktcp_sema_hash_lock);
+
+	if(!found)
+		return NULL;
+
+	return &entry->sema;
+}
+
+static struct semaphore* get_lock(long sock)
+{
+	struct semaphore *sema=ktcp_sema_get((long)sock);
+	if(!sema)
+		sema=ktcp_sema_put((long)sock);
+	return sema;
+}
+
+static void sema_up(int sock)
+{
+	struct semaphore *sema=get_lock((long)sock);
+	up(sema);
+}
+
+static void sema_down(int sock)
+{
+	struct semaphore *sema=get_lock((long)sock);
+	down(sema);
+}
+
+
 struct ktcp_hdr {
 	tx_add_t extent;
 	uint16_t length;
@@ -46,36 +113,45 @@ static DEFINE_SPINLOCK(ktcp_hash_lock);
 
 struct ktcp_cache_entry_s
 {
+	int channel;
 	struct ktcp_hdr* hdr;
 	struct hlist_node hlink;
 };
 
-DEFINE_SEMAPHORE(cache_sema);
 
-static void ktcp_cache_put(uint16_t txid, struct ktcp_hdr* hdr)
+#define RESP_FLAG 0x80000000
+static void ktcp_cache_put(int channel, uint32_t txid, struct ktcp_hdr* hdr)
 {
  	struct ktcp_cache_entry_s *entry;
 	entry = kmalloc(sizeof(struct ktcp_cache_entry_s), GFP_KERNEL);
+	if(txid&RESP_FLAG)
+		channel|=RESP_FLAG;
+	entry->channel=channel;
 	entry->hdr=hdr;
 
 	spin_lock(&ktcp_hash_lock);
 	hash_add(ktcp_hash, &entry->hlink, hdr->extent.txid);
 	spin_unlock(&ktcp_hash_lock);
-	up(&cache_sema);
+	sema_up(channel);
 }
 
-static struct ktcp_hdr* ktcp_cache_pop(uint16_t txid)
+static struct ktcp_hdr* ktcp_cache_pop(int channel, uint32_t txid)
 {
 	int found=0;
 	int bkt;
 	struct ktcp_hdr *hdr=NULL;
 	struct ktcp_cache_entry_s *entry=NULL;
 
-	down(&cache_sema);
+	if(txid==0xFFFFFFFF)
+		channel|=RESP_FLAG;
+
+	sema_down(channel);
 	spin_lock(&ktcp_hash_lock);
 	hash_for_each(ktcp_hash, bkt, entry, hlink) {
+		if(entry->channel!=channel)
+			continue;
 		hdr=entry->hdr;
-		if(txid==hdr->extent.txid || txid==0xFF)
+		if(txid==hdr->extent.txid || (txid==0xFFFFFFFF && (hdr->extent.txid&RESP_FLAG)))
 		{
 			found=1;
 			printk(KERN_DEBUG "%s:%d:  found in cache\n", __func__,hdr->extent.txid);
@@ -89,7 +165,7 @@ static struct ktcp_hdr* ktcp_cache_pop(uint16_t txid)
 	spin_unlock(&ktcp_hash_lock);
 
 	if(!found)
-		up(&cache_sema);
+		sema_up(channel);
 
 	kfree(entry); entry=NULL;
 	return hdr;
@@ -99,11 +175,11 @@ static int __ktcp_send(struct socket *sock, const char *buffer,
 				size_t length, unsigned long flags)
 {
 	struct ktcp_hdr* hdr = (struct ktcp_hdr*) buffer;
-	ktcp_cache_put(hdr->extent.txid, hdr); 
+	int channel=(int)(long)sock;
+	ktcp_cache_put(channel, hdr->extent.txid, hdr); 
 	return 0;
 }
 
-#define RESP_FLAG 0x8000
 int ktcp_send(struct socket *sock, const char *buffer, size_t length,
 		unsigned long flags, const tx_add_t * tx_add)
 {
@@ -115,7 +191,8 @@ int ktcp_send(struct socket *sock, const char *buffer, size_t length,
 	//mm_segment_t oldmm;
 	char *local_buffer=NULL;
 
-	printk(KERN_DEBUG "%s:%d: txid %d wf %d length %ld\n", __func__, current->pid, tx_add->txid, tx_add->txid^RESP_FLAG, length);
+	//printk(KERN_DEBUG "%s:%d: txid %d wf %d length %ld\n", __func__, current->pid, tx_add->txid, tx_add->txid^RESP_FLAG, length);
+	printk(KERN_DEBUG "%s:%d: sock %p txid %d wf %d length %ld\n", __func__, current->pid, sock, tx_add->txid, tx_add->txid^RESP_FLAG, length);
 
 	hdr.extent.txid^=RESP_FLAG;
 
@@ -152,22 +229,27 @@ int ktcp_receive(struct socket *sock, char* buffer, unsigned long flags,
 {
 	int ret=0;
 	struct ktcp_hdr *hdr=NULL;
-	uint16_t txid=tx_add->txid;
+	uint32_t txid=tx_add->txid;
 	uint16_t length=0;
 
-	printk(KERN_DEBUG "%s:%d: txid %d started\n", __func__, current->pid, tx_add->txid);
+	//printk(KERN_DEBUG "%s:%d: txid %d started\n", __func__, current->pid, tx_add->txid);
+	printk(KERN_DEBUG "%s:%d: sock %p txid %d started\n", __func__, current->pid, sock, tx_add->txid);
 	//Execute receive_get and cache_get until the right transaction is found
 	do{
-		hdr=ktcp_cache_pop(txid);
-		//udelay(100);
+		hdr=ktcp_cache_pop((int)(long)sock, txid);
+		if(hdr==NULL)
+		{
+			udelay(10);
+			printk(KERN_DEBUG "%s:%d: sock %p txid %d retrying\n", __func__, current->pid, sock, tx_add->txid);
+		}
 	}while(hdr==NULL);
 
-	BUG_ON(!hdr || (hdr->extent.txid!=txid && txid!=0xFF));
+	BUG_ON(!hdr || (hdr->extent.txid!=txid && txid!=0xFFFFFFFF));
 
 	length = hdr->length;
 
-	printk(KERN_DEBUG "%s: txid requested %d found %d length %d\n", 
-				__func__, txid, hdr->extent.txid, length);
+	printk(KERN_DEBUG "%s:%d txid requested %d found %d length %d\n", 
+				__func__, current->pid, txid, hdr->extent.txid, length);
 	
 	/* hdr.length is undetermined on process killed */
 	if (unlikely(length > PAGE_SIZE)) {
@@ -187,125 +269,54 @@ out:
 	return ret < 0 ? ret : length;
 }
 
+
+
 int ktcp_connect(const char *host, const char *port, struct socket **conn_socket)
 {
-	int ret;
-	struct sockaddr_in saddr;
-	long portdec;
 
-	if (host == NULL || port == NULL || conn_socket == NULL) {
-		return -EINVAL;
-	}
+	long ret;
 
-	ret = sock_create(PF_INET, SOCK_STREAM, IPPROTO_TCP, conn_socket);
-	if (ret < 0) {
-		printk(KERN_DEBUG "sock_create %d\n", ret);
-		return ret;
-	}
+	kstrtol(port, 10, &ret);
+	//ret-=37710-1;
+	ret=1<<(ret-37710);
+	*conn_socket=(struct socket *)ret;
 
-	memset(&saddr, 0, sizeof(saddr));
-	saddr.sin_family = AF_INET;
-	kstrtol(port, 10, &portdec);
-	saddr.sin_port = htons(portdec);
-	saddr.sin_addr.s_addr = in_aton(host);
-
-re_connect:
-	ret = (*conn_socket)->ops->connect(*conn_socket, (struct sockaddr *)&saddr,
-			sizeof(saddr), O_RDWR);
-	if (ret == -EAGAIN || ret == -ERESTARTSYS) {
-		goto re_connect;
-	}
-
-	if (ret && (ret != -EINPROGRESS)) {
-		printk(KERN_DEBUG "connect %d\n", ret);
-		sock_release(*conn_socket);
-		return ret;
-	}
 	return SUCCESS;
 }
+
 
 int ktcp_listen(const char *host, const char *port, struct socket **listen_socket)
 {
-	int ret;
-	struct sockaddr_in saddr;
-	long portdec;
 
-	BUILD_BUG_ON((sizeof(struct ktcp_hdr)) != (sizeof(uint16_t) + sizeof(extent_t)));
+	long ret;
 
-	ret = sock_create(PF_INET, SOCK_STREAM, IPPROTO_TCP, listen_socket);
-	if (ret != 0) {
-		printk(KERN_ERR "sock_create %d", ret);
-		return ret;
-	}
-	memset(&saddr, 0, sizeof(saddr));
-	saddr.sin_family = AF_INET;
-	kstrtol(port, 10, &portdec);
-	saddr.sin_port = htons(portdec);
-	saddr.sin_addr.s_addr = in_aton(host);
-
-	ret = (*listen_socket)->ops->bind(*listen_socket, (struct sockaddr *)&saddr, sizeof(saddr));
-	if (ret != 0) {
-		printk(KERN_ERR "bind %d\n", ret);
-		sock_release(*listen_socket);
-		return ret;
-	}
-
-	ret = (*listen_socket)->ops->listen(*listen_socket, DEFAULT_BACKLOG);
-	if (ret != 0) {
-		printk(KERN_ERR "listen %d\n", ret);
-		sock_release(*listen_socket);
-		return ret;
-	}
+	kstrtol(port, 10, &ret);
+	ret=1<<(ret-37710);
+	*listen_socket=(struct socket *)ret;
 
 	return SUCCESS;
 }
+
 
 int ktcp_accept(struct socket *listen_socket, struct socket **accept_socket, unsigned long flag)
 {
 	int ret;
+	static long count=0;
 
-	if (listen_socket == NULL) {
-		printk(KERN_ERR "null listen_socket\n");
-		return -EINVAL;
-	}
 
-	ret = sock_create_lite(listen_socket->sk->sk_family, listen_socket->sk->sk_type,
-			listen_socket->sk->sk_protocol, accept_socket);
-	if (ret != 0) {
-		printk(KERN_ERR "sock_create %d\n", ret);
-		return ret;
-	}
+	*accept_socket=listen_socket;
 
-re_accept:
-	ret = listen_socket->ops->accept(listen_socket, *accept_socket, flag);
-	if (ret == -ERESTARTSYS) {
-		if (kthread_should_stop())
-			return ret;
-		goto re_accept;
-	}
-	// When setting SOCK_NONBLOCK flag, accept return this when there's nothing in waiting queue.
-	if (ret == -EWOULDBLOCK || ret == -EAGAIN) {
-		sock_release(*accept_socket);
-		*accept_socket = NULL;
-		return ret;
-	}
-	if (ret < 0) {
-		printk(KERN_ERR "accept %d\n", ret);
-		sock_release(*accept_socket);
-		*accept_socket = NULL;
-		return ret;
-	}
+	ret=(long)listen_socket;
+	if(count&ret)
+		while(1)
+			yield();
 
-	(*accept_socket)->ops = listen_socket->ops;
+	count|=ret;
 	return SUCCESS;
 }
 
 int ktcp_release(struct socket *conn_socket)
 {
-	if (conn_socket == NULL) {
-		return -EINVAL;
-	}
 
-	sock_release(conn_socket);
 	return SUCCESS;
 }
