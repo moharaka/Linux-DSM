@@ -114,6 +114,7 @@ static DEFINE_SPINLOCK(ktcp_hash_lock);
 struct ktcp_cache_entry_s
 {
 	int channel;
+	uint32_t txid;
 	struct ktcp_hdr* hdr;
 	struct hlist_node hlink;
 };
@@ -128,6 +129,7 @@ static void ktcp_cache_put(int channel, uint32_t txid, struct ktcp_hdr* hdr)
 		channel|=RESP_FLAG;
 	entry->channel=channel;
 	entry->hdr=hdr;
+	entry->txid=txid;
 
 	spin_lock(&ktcp_hash_lock);
 	hash_add(ktcp_hash, &entry->hlink, hdr->extent.txid);
@@ -151,10 +153,13 @@ static struct ktcp_hdr* ktcp_cache_pop(int channel, uint32_t txid)
 		if(entry->channel!=channel)
 			continue;
 		hdr=entry->hdr;
+		BUG_ON(hdr==NULL);
+		BUG_ON(entry->txid!=hdr->extent.txid);
+		//BUG_ON(!hdr || (hdr->extent.txid!=txid && txid!=0xFFFFFFFF));
 		if(txid==hdr->extent.txid || (txid==0xFFFFFFFF && (hdr->extent.txid&RESP_FLAG)))
 		{
 			found=1;
-			printk(KERN_DEBUG "%s:%d:  found in cache\n", __func__,hdr->extent.txid);
+			//printk(KERN_DEBUG "%s:%d %d found in cache\n", __func__, current->pid, hdr->extent.txid);
 			break;
 		}
 	}
@@ -167,7 +172,9 @@ static struct ktcp_hdr* ktcp_cache_pop(int channel, uint32_t txid)
 	if(!found)
 		sema_up(channel);
 
-	kfree(entry); entry=NULL;
+	if(found)
+		kfree(entry);
+
 	return hdr;
 }
 
