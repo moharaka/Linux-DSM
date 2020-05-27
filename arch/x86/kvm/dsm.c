@@ -399,6 +399,7 @@ void kvm_dsm_vcpu_release(struct kvm_vcpu *vcpu, struct kvm_memslots *slots,
 /* DSM server functions entry. */
 static int kvm_dsm_handle_req(void *data)
 {
+	allow_signal(SIGKILL);
 #ifdef IVY_KVM_DSM
 	return ivy_kvm_dsm_handle_req(data);
 #elif defined(TARDIS_KVM_DSM)
@@ -508,6 +509,7 @@ out_listen_sock:
 		for (i = 0; i < NDSM_CONN_THREADS; i++) {
 			get_task_comm(comm, conn->threads[i]);
 			send_sig(SIGKILL, conn->threads[i], 1);
+			printk(KERN_INFO "kvm-dsm: node-%d stopped dsm server line %d\n", kvm->arch.dsm_id, __LINE__);
 			ret = kthread_stop(conn->threads[i]);
 			dsm_debug("kvm[%d] dsm connection thread %s exited with %d",
 					kvm->arch.dsm_id, comm, ret);
@@ -648,7 +650,9 @@ void kvm_dsm_free(struct kvm *kvm)
 		}
 #endif
 		send_sig(SIGKILL, kvm->arch.dsm_thread, 1);
+		printk(KERN_INFO "kvm-dsm: node-%d stopped dsm server line %d\n", kvm->arch.dsm_id, __LINE__);
 		ret = kthread_stop(kvm->arch.dsm_thread);
+		printk(KERN_INFO "kvm-dsm: node-%d stopped dsm server line %d\n", kvm->arch.dsm_id, __LINE__);
 		if (ret < 0) {
 			printk(KERN_ERR "%s: node-%d dsm root server exited with %d\n",
 					__func__, kvm->arch.dsm_id, ret);
@@ -659,6 +663,7 @@ void kvm_dsm_free(struct kvm *kvm)
 		for (i = 0; i < kvm->arch.cluster_iplist_len; i ++)
 			kfree(kvm->arch.cluster_iplist[i]);
 		kfree(kvm->arch.cluster_iplist);
+		printk(KERN_INFO "kvm-dsm: node-%d stopped dsm server\n", kvm->arch.dsm_id);
 	}
 
 	slots = kvm->arch.dsm_hvaslots;
@@ -679,6 +684,7 @@ void kvm_dsm_free(struct kvm *kvm)
 		kvfree(slots->memslots[i].rmap_lock);
 	}
 	kvfree(slots);
+	printk(KERN_INFO "kvm-dsm: node-%d slots freed\n", kvm->arch.dsm_id);
 }
 
 static int kvm_dsm_page_fault(struct kvm *kvm, struct kvm_memory_slot *memslot,

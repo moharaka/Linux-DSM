@@ -93,10 +93,20 @@ static void sema_up(int sock)
 	up(sema);
 }
 
-static void sema_down(int sock)
+static int sema_down(int sock)
 {
 	struct semaphore *sema=get_lock((long)sock);
-	down(sema);
+	int ret=0;
+	ret=down_killable(sema);
+#if 0
+
+	int ret=0;
+	do{
+		ret=down_timeout(sema, 10000);
+	}while(ret!=0 && !kthread_should_stop());
+#endif
+
+	return ret;
 }
 
 
@@ -137,9 +147,10 @@ static void ktcp_cache_put(int channel, uint32_t txid, struct ktcp_hdr* hdr)
 	sema_up(channel);
 }
 
-static struct ktcp_hdr* ktcp_cache_pop(int channel, uint32_t txid)
+static int ktcp_cache_pop(int channel, uint32_t txid, struct ktcp_hdr** ret_hdr)
 {
 	int found=0;
+	int ret;
 	int bkt;
 	struct ktcp_hdr *hdr=NULL;
 	struct ktcp_cache_entry_s *entry=NULL;
@@ -147,7 +158,9 @@ static struct ktcp_hdr* ktcp_cache_pop(int channel, uint32_t txid)
 	if(txid==0xFFFFFFFF)
 		channel|=RESP_FLAG;
 
-	sema_down(channel);
+	ret=sema_down(channel);
+	if(ret<0)
+		goto out;
 	spin_lock(&ktcp_hash_lock);
 	hash_for_each(ktcp_hash, bkt, entry, hlink) {
 		if(entry->channel!=channel)
@@ -175,7 +188,10 @@ static struct ktcp_hdr* ktcp_cache_pop(int channel, uint32_t txid)
 	if(found)
 		kfree(entry);
 
-	return hdr;
+	*ret_hdr=hdr;
+	return 0;
+out:
+	return ret;
 }
 
 static int __ktcp_send(struct socket *sock, const char *buffer,
@@ -243,7 +259,12 @@ int ktcp_receive(struct socket *sock, char* buffer, unsigned long flags,
 	printk(KERN_DEBUG "%s:%d: sock %p txid %d started\n", __func__, current->pid, sock, tx_add->txid);
 	//Execute receive_get and cache_get until the right transaction is found
 	do{
-		hdr=ktcp_cache_pop((int)(long)sock, txid);
+		ret=ktcp_cache_pop((int)(long)sock, txid, &hdr);
+		if(ret<0)
+		{
+			printk(KERN_DEBUG "%s:%d: sock %p txid %d error %d\n", __func__, current->pid, sock, tx_add->txid, ret);
+			goto out;
+		}
 		if(hdr==NULL)
 		{
 			udelay(10);
@@ -315,8 +336,12 @@ int ktcp_accept(struct socket *listen_socket, struct socket **accept_socket, uns
 
 	ret=(long)listen_socket;
 	if(count&ret)
-		while(1)
-			yield();
+	{
+		while(!kthread_should_stop())
+			ssleep(1);
+		printk(KERN_DEBUG "%s:%d: sock %p exiting\n", __func__, current->pid, accept_socket);
+		return -ERESTARTSYS;
+	}
 
 	count|=ret;
 	return SUCCESS;
