@@ -31,6 +31,8 @@
 
 #include "ktcp.h"
 
+#define ktcp_printk(...) /**/ 
+
 #define USE_CACHE
 
 #define BLOCKED_HASH_BITS	7
@@ -172,7 +174,7 @@ static int ktcp_cache_pop(int channel, uint32_t txid, struct ktcp_hdr** ret_hdr)
 		if(txid==hdr->extent.txid || (txid==0xFFFFFFFF && (hdr->extent.txid&RESP_FLAG)))
 		{
 			found=1;
-			//printk(KERN_DEBUG "%s:%d %d found in cache\n", __func__, current->pid, hdr->extent.txid);
+			//ktcp_printk(KERN_DEBUG "%s:%d %d found in cache\n", __func__, current->pid, hdr->extent.txid);
 			break;
 		}
 	}
@@ -214,8 +216,8 @@ int ktcp_send(struct socket *sock, const char *buffer, size_t length,
 	//mm_segment_t oldmm;
 	char *local_buffer=NULL;
 
-	//printk(KERN_DEBUG "%s:%d: txid %d wf %d length %ld\n", __func__, current->pid, tx_add->txid, tx_add->txid^RESP_FLAG, length);
-	printk(KERN_DEBUG "%s:%d: sock %p txid %d wf %d length %ld\n", __func__, current->pid, sock, tx_add->txid, tx_add->txid^RESP_FLAG, length);
+	//ktcp_printk(KERN_DEBUG "%s:%d: txid %d wf %d length %ld\n", __func__, current->pid, tx_add->txid, tx_add->txid^RESP_FLAG, length);
+	ktcp_printk(KERN_DEBUG "%s:%d: sock %p txid %d wf %d length %ld\n", __func__, current->pid, sock, tx_add->txid, tx_add->txid^RESP_FLAG, length);
 
 	hdr.extent.txid^=RESP_FLAG;
 
@@ -255,20 +257,20 @@ int ktcp_receive(struct socket *sock, char* buffer, unsigned long flags,
 	uint32_t txid=tx_add->txid;
 	uint16_t length=0;
 
-	//printk(KERN_DEBUG "%s:%d: txid %d started\n", __func__, current->pid, tx_add->txid);
-	printk(KERN_DEBUG "%s:%d: sock %p txid %d started\n", __func__, current->pid, sock, tx_add->txid);
+	//ktcp_printk(KERN_DEBUG "%s:%d: txid %d started\n", __func__, current->pid, tx_add->txid);
+	ktcp_printk(KERN_DEBUG "%s:%d: sock %p txid %d started\n", __func__, current->pid, sock, tx_add->txid);
 	//Execute receive_get and cache_get until the right transaction is found
 	do{
 		ret=ktcp_cache_pop((int)(long)sock, txid, &hdr);
 		if(ret<0)
 		{
-			printk(KERN_DEBUG "%s:%d: sock %p txid %d error %d\n", __func__, current->pid, sock, tx_add->txid, ret);
+			ktcp_printk(KERN_DEBUG "%s:%d: sock %p txid %d error %d\n", __func__, current->pid, sock, tx_add->txid, ret);
 			goto out;
 		}
 		if(hdr==NULL)
 		{
 			udelay(10);
-			printk(KERN_DEBUG "%s:%d: sock %p txid %d retrying\n", __func__, current->pid, sock, tx_add->txid);
+			ktcp_printk(KERN_DEBUG "%s:%d: sock %p txid %d retrying\n", __func__, current->pid, sock, tx_add->txid);
 		}
 	}while(hdr==NULL);
 
@@ -276,12 +278,12 @@ int ktcp_receive(struct socket *sock, char* buffer, unsigned long flags,
 
 	length = hdr->length;
 
-	printk(KERN_DEBUG "%s:%d txid requested %d found %d length %d\n", 
+	ktcp_printk(KERN_DEBUG "%s:%d txid requested %d found %d length %d\n", 
 				__func__, current->pid, txid, hdr->extent.txid, length);
 	
 	/* hdr.length is undetermined on process killed */
 	if (unlikely(length > PAGE_SIZE)) {
-		printk(KERN_WARNING "%s: buffer to small\n", __func__);
+		ktcp_printk(KERN_WARNING "%s: buffer to small\n", __func__);
 		ret = -EFAULT;
 		goto out;
 	}
@@ -339,7 +341,8 @@ int ktcp_accept(struct socket *listen_socket, struct socket **accept_socket, uns
 	{
 		while(!kthread_should_stop())
 			ssleep(1);
-		printk(KERN_DEBUG "%s:%d: sock %p exiting\n", __func__, current->pid, accept_socket);
+		ktcp_printk(KERN_DEBUG "%s:%d: sock %p exiting\n", __func__, current->pid, accept_socket);
+		count=0;
 		return -ERESTARTSYS;
 	}
 

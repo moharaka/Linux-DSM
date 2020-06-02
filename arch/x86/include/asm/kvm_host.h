@@ -743,6 +743,7 @@ struct kvm_dsm_info {
 #ifdef KVM_DSM_PF_PROFILE
 	unsigned read_pf;
 	unsigned write_pf;
+	unsigned long rip;
 #endif
 
 #ifdef KVM_DSM_DIFF

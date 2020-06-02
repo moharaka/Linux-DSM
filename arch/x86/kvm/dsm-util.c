@@ -312,6 +312,15 @@ void kvm_dsm_pf_trace(struct kvm *kvm, struct kvm_dsm_memory_slot *slot,
 		hfn_t vfn, bool write, int resp_len)
 {
 	unsigned long index;
+	struct kvm_vcpu *first_vcpu=kvm->vcpus[kvm->arch.dsm_id];
+	unsigned long rip=0;
+	struct task_struct *task=NULL;
+	task=pid_task(first_vcpu->pid, PIDTYPE_PID);
+	//if(first_vcpu->mode&EXITING_GUEST_MODE || first_vcpu->mode&OUTSIDE_GUEST_MODE)
+	if(first_vcpu->mode==OUTSIDE_GUEST_MODE && task->pid==current->pid)
+		rip=kvm_rip_read(first_vcpu);
+	//printk(KERN_INFO "%s: node-%d vcpu pid %u current pid %u mode %u rip %lx\n",
+	//		__func__, kvm->arch.dsm_id, task? task->pid:0, current->pid, first_vcpu->mode, rip);
 
 	/* Data race here doesn't matter, I suppose. */
 	kvm->stat.total_dsm_pfs++;
@@ -325,6 +334,8 @@ void kvm_dsm_pf_trace(struct kvm *kvm, struct kvm_dsm_memory_slot *slot,
 		slot->vfn_dsm_state[index].read_pf++;
 		WARN_ON(slot->vfn_dsm_state[index].read_pf == 0);
 	}
+	if(rip)
+		slot->vfn_dsm_state[index].rip=rip;
 }
 
 struct dsm_profile_info {
@@ -333,6 +344,7 @@ struct dsm_profile_info {
 	bool is_smm;
 	unsigned read_pf;
 	unsigned write_pf;
+	unsigned long rip;
 };
 
 /* Find the N pages with maximum read and write. */
@@ -340,6 +352,7 @@ void kvm_dsm_report_profile(struct kvm *kvm)
 {
 	#define N 10
 	int idx;
+	long unique_page=0;
 	struct kvm_dsm_memslots *slots;
 	struct kvm_dsm_memory_slot *slot;
 	struct kvm_dsm_info *info;
@@ -363,6 +376,7 @@ void kvm_dsm_report_profile(struct kvm *kvm)
 					read_faults = info->read_pf;
 					read_most[i].read_pf = info->read_pf;
 					read_most[i].write_pf = info->write_pf;
+					read_most[i].rip = info->rip;
 					read_most[i].vfn = slot->base_vfn + k;
 					read_most[i].gfn = __kvm_dsm_vfn_to_gfn(slot, false,
 							slot->base_vfn + k, &read_most[i].is_smm, NULL);
@@ -372,6 +386,7 @@ void kvm_dsm_report_profile(struct kvm *kvm)
 					write_faults = info->write_pf;
 					write_most[i].read_pf = info->read_pf;
 					write_most[i].write_pf = info->write_pf;
+					write_most[i].rip = info->rip;
 					write_most[i].vfn = slot->base_vfn + k;
 					write_most[i].gfn = __kvm_dsm_vfn_to_gfn(slot, false,
 							slot->base_vfn + k, &write_most[i].is_smm, NULL);
@@ -380,26 +395,41 @@ void kvm_dsm_report_profile(struct kvm *kvm)
 		}
 		read_faults = write_faults = 0;
 	}
+
+	for (j = 0; j < slots->used_slots; j++) {
+		slot = &slots->memslots[j];
+		for (k = 0; k < slot->npages; k++) {
+			info = &slot->vfn_dsm_state[k];
+			if(info->read_pf>0 || info->write_pf>0)
+				unique_page+=1; 
+		}
+	}
+
 	srcu_read_unlock(&kvm->srcu, idx);
 
 	printk(KERN_INFO "kvm-dsm: node-%d most frequently read %d pages\n",
 			kvm->arch.dsm_id, N);
-	printk(KERN_INFO "\tvfn\tgfn\tread\twrite\n");
+	//printk(KERN_INFO "\tvfn\tgfn\tread\twrite\n");
+	printk(KERN_INFO "\tvfn\tgfn\tread\twrite\trip\n");
 	for (i = 0; i < N; i++) {
-		printk(KERN_INFO "\t%llx\t[%llu,%d]\t%u\t%u\n", read_most[i].vfn,
+		printk(KERN_INFO "\t%llx\t[%llu,%d]\t%u\t%u\t%lx\n", read_most[i].vfn,
 				read_most[i].gfn, read_most[i].is_smm,
-				read_most[i].read_pf, read_most[i].write_pf);
+				read_most[i].read_pf, read_most[i].write_pf,
+				read_most[i].rip);
 	}
 
 	printk(KERN_INFO "kvm-dsm: node-%d most frequently written %d pages\n",
 			kvm->arch.dsm_id, N);
-	printk(KERN_INFO "\tvfn\tgfn\tread\twrite\n");
+	printk(KERN_INFO "\tvfn\tgfn\tread\twrite\trip\n");
 	for (i = 0; i < N; i++) {
-		printk(KERN_INFO "\t%llx\t[%llu,%d]\t%u\t%u\n", write_most[i].vfn,
+		printk(KERN_INFO "\t%llx\t[%llu,%d]\t%u\t%u\t%lx\n", write_most[i].vfn,
 				write_most[i].gfn, write_most[i].is_smm,
-				write_most[i].read_pf, write_most[i].write_pf);
+				write_most[i].read_pf, write_most[i].write_pf, 
+				write_most[i].rip);
 	}
 
+	printk(KERN_INFO "kvm-dsm: node-%d unique page exchanged %lu\n",
+			kvm->arch.dsm_id, unique_page);
 	printk(KERN_INFO "kvm-dsm: node-%d total page faults %lu\n",
 			kvm->arch.dsm_id, kvm->stat.total_dsm_pfs);
 	printk(KERN_INFO "kvm-dsm: node-%d average bytes %lu\n",

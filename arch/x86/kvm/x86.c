@@ -6140,7 +6140,7 @@ void kvm_pv_print_stdout(struct kvm_vcpu *vcpu,
 				unsigned long a0, unsigned long a1,
 				unsigned long a2, unsigned long a3)
 {
-	printk(KERN_INFO "id %d a0 %lx a1 0x%lx a2 0x%lx a3 0x%lx", vcpu->vcpu_id, a0, a1, a2, a3);
+	//printk(KERN_INFO "id %d a0 %lx a1 0x%lx a2 0x%lx a3 0x%lx", vcpu->vcpu_id, a0, a1, a2, a3);
 }
 
 int kvm_emulate_hypercall(struct kvm_vcpu *vcpu)
