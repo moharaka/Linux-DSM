@@ -798,7 +798,9 @@ int ivy_kvm_dsm_page_fault(struct kvm *kvm, struct kvm_memory_slot *memslot,
 	}
 
 out:
+#ifdef KVM_DSM_PF_PROFILE
 	kvm_dsm_pf_trace(kvm, slot, vfn, write, resp_len);
+#endif
 	kfree(page);
 	return ret;
 

@@ -520,7 +520,9 @@ out_listen_sock:
 
 	network_ops.release(listen_sock);
 
+#ifdef KVM_DSM_PF_PROFILE
 	kvm_dsm_report_profile(kvm);
+#endif
 	return ret;
 }
 

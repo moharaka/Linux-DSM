@@ -704,7 +704,7 @@ typedef uint32_t version_t;
 typedef uint32_t timestamp_t;
 
 #define KVM_DSM_W_SHARED
-#define KVM_DSM_DIFF
+//#define KVM_DSM_DIFF
 #define KVM_DSM_PF_PROFILE
 
 #define DSM_MAX_INSTANCES 16
@@ -740,6 +740,7 @@ struct kvm_dsm_info {
 	unsigned pinned_read;
 	unsigned pinned_write;
 	struct mutex lock;
+	char last_lock_owner_comm[TASK_COMM_LEN];
 #ifdef KVM_DSM_PF_PROFILE
 	unsigned read_pf;
 	unsigned write_pf;

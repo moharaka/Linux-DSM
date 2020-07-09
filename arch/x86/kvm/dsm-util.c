@@ -24,6 +24,8 @@
 #include <linux/mmu_context.h>
 #include <linux/jhash.h>
 
+#define LAST_OWNER
+
 struct kvm_network_ops network_ops;
 
 int get_dsm_address(struct kvm *kvm, int dsm_id, struct dsm_address *addr)
@@ -70,6 +72,7 @@ int dsm_create_memslot(struct kvm_dsm_memory_slot *slot,
 	for (i = 0; i < npages; i++) {
 		mutex_init(&slot->vfn_dsm_state[i].fast_path_lock);
 		mutex_init(&slot->vfn_dsm_state[i].lock);
+		strncpy(slot->vfn_dsm_state[i].last_lock_owner_comm, "NONE", TASK_COMM_LEN);
 	}
 
 	return ret;
@@ -111,12 +114,10 @@ void dsm_lock(struct kvm *kvm, struct kvm_dsm_memory_slot *slot, hfn_t vfn)
 {
 #ifdef KVM_DSM_DEBUG
 	char cur_comm[TASK_COMM_LEN];
-#ifdef CONFIG_DEBUG_MUTEXES
-	char lock_owner_comm[TASK_COMM_LEN];
-#endif
 	int retry_cnt = 0;
 
 	retry_cnt = 0;
+	get_task_comm(cur_comm, current);
 	while (!mutex_trylock(&slot->vfn_dsm_state[vfn -
 				slot->base_vfn].lock)) {
 		usleep_range(10, 10);
@@ -124,13 +125,11 @@ void dsm_lock(struct kvm *kvm, struct kvm_dsm_memory_slot *slot, hfn_t vfn)
 		/* ~10s */
 		if (retry_cnt > 1000000) {
 			gfn_t gfn = __kvm_dsm_vfn_to_gfn(slot, false, vfn, NULL, NULL);
-			get_task_comm(cur_comm, current);
-#ifdef CONFIG_DEBUG_MUTEXES
-			get_task_comm(lock_owner_comm, slot->vfn_dsm_state[vfn -
-				slot->base_vfn].lock.owner);
+#ifdef LAST_OWNER
 			printk(KERN_ERR "%s: task %s DEADLOCK (held by %s) on gfn[%llu] "
 					"vfn[%llu] caller %pf\n",
-					__func__, cur_comm, lock_owner_comm, gfn, vfn,
+					__func__, cur_comm, slot->vfn_dsm_state[vfn -
+					slot->base_vfn].last_lock_owner_comm, gfn, vfn,
 					__builtin_return_address(0));
 #else
 			printk(KERN_ERR "%s: task %s DEADLOCK on gfn[%llu] "
@@ -141,6 +140,9 @@ void dsm_lock(struct kvm *kvm, struct kvm_dsm_memory_slot *slot, hfn_t vfn)
 			retry_cnt = 0;
 		}
 	}
+#ifdef LAST_OWNER
+	strncpy(slot->vfn_dsm_state[vfn - slot->base_vfn].last_lock_owner_comm,  cur_comm, TASK_COMM_LEN);
+#endif
 
 #else
 	return mutex_lock(&slot->vfn_dsm_state[vfn - slot->base_vfn].lock);
@@ -149,6 +151,7 @@ void dsm_lock(struct kvm *kvm, struct kvm_dsm_memory_slot *slot, hfn_t vfn)
 
 void dsm_unlock(struct kvm *kvm, struct kvm_dsm_memory_slot *slot, hfn_t vfn)
 {
+	strncpy(slot->vfn_dsm_state[vfn - slot->base_vfn].last_lock_owner_comm,  "REALEASED", TASK_COMM_LEN);
 	return mutex_unlock(&slot->vfn_dsm_state[vfn - slot->base_vfn].lock);
 }
 
@@ -396,12 +399,19 @@ void kvm_dsm_report_profile(struct kvm *kvm)
 		read_faults = write_faults = 0;
 	}
 
+	printk(KERN_INFO "node-%d\t\tvfn\t\tgfn\t\tis_smm\t\tread\t\twrite\t\trip\n",kvm->arch.dsm_id);
 	for (j = 0; j < slots->used_slots; j++) {
 		slot = &slots->memslots[j];
 		for (k = 0; k < slot->npages; k++) {
 			info = &slot->vfn_dsm_state[k];
 			if(info->read_pf>0 || info->write_pf>0)
+			{
+				bool is_smm;
+				hfn_t vfn=slot->base_vfn + k;
+				gfn_t gfn= __kvm_dsm_vfn_to_gfn(slot, false, vfn, &is_smm, NULL);
+				printk(KERN_INFO "\t\t%llx\t %llu\t %d\t %u\t %u\t %lx\n", vfn, gfn, is_smm, info->read_pf, info->write_pf, info->rip);
 				unique_page+=1; 
+			}
 		}
 	}
 
