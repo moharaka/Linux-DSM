@@ -373,6 +373,7 @@ static inline void dsm_unlock_fast_path(struct kvm_dsm_memory_slot *slot,
 void kvm_dsm_pf_trace(struct kvm *kvm, struct kvm_dsm_memory_slot *slot,
 		hfn_t vfn, bool write, int resp_len);
 void kvm_dsm_report_profile(struct kvm *kvm);
+void kvm_dsm_drop_cache(struct kvm *kvm);
 #endif
 
 #endif /* ARCH_X86_KVM_DSM_UTIL_H */

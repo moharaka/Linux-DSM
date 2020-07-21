@@ -741,9 +741,10 @@ struct kvm_dsm_info {
 	unsigned pinned_write;
 	struct mutex lock;
 #ifdef KVM_DSM_PF_PROFILE
+#define KVM_DSM_PF_RIP_MAX 4
 	unsigned read_pf;
 	unsigned write_pf;
-	unsigned long rip;
+	unsigned long rip[KVM_DSM_PF_RIP_MAX];
 #endif
 
 #ifdef KVM_DSM_DIFF
