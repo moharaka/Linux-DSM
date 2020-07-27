@@ -341,10 +341,27 @@ void kvm_dsm_pf_trace(struct kvm *kvm, struct kvm_dsm_memory_slot *slot,
 	if(rip)
 	{
 		int i;
+		int exist=0;
 		for(i=0; i<KVM_DSM_PF_RIP_MAX; i++)
 		{
-			if(!slot->vfn_dsm_state[index].rip[i])
-				slot->vfn_dsm_state[index].rip[i]=rip;
+			if(slot->vfn_dsm_state[index].rip[i]==rip)
+			{
+				exist=1;
+				break;
+			}
+		}
+
+		if(!exist)
+		{
+			//place in first empty slot
+			for(i=0; i<KVM_DSM_PF_RIP_MAX; i++)
+			{
+				if(!slot->vfn_dsm_state[index].rip[i])
+				{
+					slot->vfn_dsm_state[index].rip[i]=rip;
+					break;
+				}
+			}
 		}
 	}
 
@@ -371,11 +388,24 @@ static void __kvm_dsm_report_profile(struct kvm *kvm, int clean)
 	struct kvm_dsm_memory_slot *slot;
 	struct kvm_dsm_info *info;
 
-	struct dsm_profile_info read_most[N];
-	struct dsm_profile_info write_most[N];
 	unsigned read_faults = 0, write_faults = 0;
 	int i, j, k;
 	int i_rip;
+
+	struct dsm_profile_info read_most[N];
+	struct dsm_profile_info write_most[N];
+
+/*
+	struct dsm_profile_info *read_most;
+	struct dsm_profile_info *write_most;
+	read_most = kvm_kvzalloc(N * sizeof(*read_most));
+	if (!read_most)
+		return ;
+
+	write_most = kvm_kvzalloc(N * sizeof(*write_most));
+	if (!write_most)
+		return ;
+*/
 
 	/* TODO: Use priority queue */
 	idx = srcu_read_lock(&kvm->srcu);
@@ -440,29 +470,29 @@ static void __kvm_dsm_report_profile(struct kvm *kvm, int clean)
 	//printk(KERN_INFO "\tvfn\tgfn\tread\twrite\n");
 	printk(KERN_INFO "\tvfn\tgfn\tread\twrite\trip\n");
 	for (i = 0; i < N; i++) {
-		printk(KERN_INFO "\t%llx\t[%llu,%d]\t%u\t%u\t", read_most[i].vfn,
+		printk(KERN_INFO "\t%llx; [%llu,%d]; %u; %u;", read_most[i].vfn,
 				read_most[i].gfn, read_most[i].is_smm,
 				read_most[i].read_pf, read_most[i].write_pf
 				);
 		for(i_rip=0; i_rip<KVM_DSM_PF_RIP_MAX; i_rip++)
 		{
-			printk(KERN_INFO "%lx ", read_most[i].rip[i_rip]);
+			printk(KERN_CONT " %lx", read_most[i].rip[i_rip]);
 		}
-		printk(KERN_INFO "\n");
+		printk(KERN_CONT "\n");
 	}
 
 	printk(KERN_INFO "kvm-dsm: node-%d most frequently written %d pages\n",
 			kvm->arch.dsm_id, N);
 	printk(KERN_INFO "\tvfn\tgfn\tread\twrite\trip\n");
 	for (i = 0; i < N; i++) {
-		printk(KERN_INFO "\t%llx\t[%llu,%d]\t%u\t%u\t\n", write_most[i].vfn,
+		printk(KERN_INFO "\t%llx; [%llu,%d]; %u; %u;", write_most[i].vfn,
 				write_most[i].gfn, write_most[i].is_smm,
 				write_most[i].read_pf, write_most[i].write_pf);
 		for(i_rip=0; i_rip<KVM_DSM_PF_RIP_MAX; i_rip++)
 		{
-			printk(KERN_INFO "%lx ", write_most[i].rip[i_rip]);
+			printk(KERN_CONT " %lx", write_most[i].rip[i_rip]);
 		}
-		printk(KERN_INFO "\n");
+		printk(KERN_CONT "\n");
 	}
 
 	printk(KERN_INFO "kvm-dsm: node-%d unique page exchanged %lu\n",
@@ -483,6 +513,8 @@ static void __kvm_dsm_report_profile(struct kvm *kvm, int clean)
 		kvm->stat.total_tx_latency = 0;
 	}
 	write_unlock_irqrestore(&trace_lock, flags);
+	//kvfree(read_most);
+	//kvfree(write_most);
 }
 
 void kvm_dsm_report_profile(struct kvm *kvm)
