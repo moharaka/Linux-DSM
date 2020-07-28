@@ -308,9 +308,15 @@ int kvm_write_guest_page_nonlocal(struct kvm *kvm,
 }
 
 #ifdef KVM_DSM_PF_PROFILE
+/*
+void kvm_dsm_pf_get_calltrace()
+{
+}
+*/
+
 rwlock_t trace_lock = __RW_LOCK_UNLOCKED(trace_lock);
 void kvm_dsm_pf_trace(struct kvm *kvm, struct kvm_dsm_memory_slot *slot,
-		hfn_t vfn, bool write, int resp_len)
+		hfn_t vfn, bool write, int resp_len, struct kvm_vcpu *vcpu)
 {
 	unsigned long flags;
 	unsigned long index;

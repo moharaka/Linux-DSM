@@ -649,7 +649,7 @@ static bool is_fast_path(struct kvm *kvm, struct kvm_dsm_memory_slot *slot,
  * 2. Upon a read fault, the version of requester is the same as resp.version
  */
 int ivy_kvm_dsm_page_fault(struct kvm *kvm, struct kvm_memory_slot *memslot,
-		gfn_t gfn, bool is_smm, int write)
+		gfn_t gfn, bool is_smm, int write, struct kvm_vcpu *vcpu)
 {
 	int ret, resp_len = 0;
 	struct kvm_dsm_memory_slot *slot;
@@ -798,7 +798,7 @@ int ivy_kvm_dsm_page_fault(struct kvm *kvm, struct kvm_memory_slot *memslot,
 	}
 
 out:
-	kvm_dsm_pf_trace(kvm, slot, vfn, write, resp_len);
+	kvm_dsm_pf_trace(kvm, slot, vfn, write, resp_len, vcpu);
 	kfree(page);
 	return ret;
 

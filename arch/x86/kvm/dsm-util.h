@@ -371,7 +371,7 @@ static inline void dsm_unlock_fast_path(struct kvm_dsm_memory_slot *slot,
 
 #ifdef KVM_DSM_PF_PROFILE
 void kvm_dsm_pf_trace(struct kvm *kvm, struct kvm_dsm_memory_slot *slot,
-		hfn_t vfn, bool write, int resp_len);
+		hfn_t vfn, bool write, int resp_len, struct kvm_vcpu *vcpu);
 void kvm_dsm_report_profile(struct kvm *kvm);
 void kvm_dsm_drop_cache(struct kvm *kvm);
 #endif

@@ -26,7 +26,7 @@ bool kvm_dsm_dbg_verbose = 0;
 #endif
 
 static int kvm_dsm_page_fault(struct kvm *kvm, struct kvm_memory_slot *memslot,
-		gfn_t gfn, bool is_smm, int write);
+		gfn_t gfn, bool is_smm, int write, struct kvm_vcpu* vcpu);
 
 /*
  * The old dsm_memslots are free here rather than kvm_dsm_remove_memslot.
@@ -229,7 +229,7 @@ out:
  * kvm_dsm_release_page.
  */
 static int __kvm_dsm_acquire_page(struct kvm *kvm,
-		struct kvm_memory_slot *slot, gfn_t gfn, bool is_smm, bool write)
+		struct kvm_memory_slot *slot, gfn_t gfn, bool is_smm, bool write, struct kvm_vcpu *vcpu)
 {
 	struct kvm_dsm_memory_slot *hvaslot;
 	hfn_t vfn;
@@ -255,7 +255,7 @@ static int __kvm_dsm_acquire_page(struct kvm *kvm,
 		return ACC_ALL;
 
 	dsm_lock(kvm, hvaslot, vfn);
-	dsm_access = kvm_dsm_page_fault(kvm, slot, gfn, is_smm, write);
+	dsm_access = kvm_dsm_page_fault(kvm, slot, gfn, is_smm, write, vcpu);
 	if (dsm_access < 0) {
 		dsm_unlock(kvm, hvaslot, vfn);
 	}
@@ -269,7 +269,7 @@ int kvm_dsm_acquire_page(struct kvm *kvm, struct kvm_memory_slot **slot,
 	memslot = gfn_to_memslot(kvm, gfn);
 	if (slot)
 		*slot = memslot;
-	return __kvm_dsm_acquire_page(kvm, memslot, gfn, 0, write);
+	return __kvm_dsm_acquire_page(kvm, memslot, gfn, 0, write, NULL);
 }
 
 int kvm_dsm_vcpu_acquire_page(struct kvm_vcpu *vcpu,
@@ -280,7 +280,7 @@ int kvm_dsm_vcpu_acquire_page(struct kvm_vcpu *vcpu,
 	if (slot)
 		*slot = memslot;
 	return __kvm_dsm_acquire_page(vcpu->kvm, memslot,
-			gfn, is_smm(vcpu), write);
+			gfn, is_smm(vcpu), write, NULL);
 }
 
 /*
@@ -328,7 +328,7 @@ int kvm_dsm_acquire(struct kvm *kvm, struct kvm_memslots **slots, gpa_t gpa,
 		*slots = memslots;
 	for (gfn = gpa >> PAGE_SHIFT; gfn <= gfn_end; gfn++) {
 		slot = __gfn_to_memslot(memslots, gfn);
-		ret = __kvm_dsm_acquire_page(kvm, slot, gfn, 0, write);
+		ret = __kvm_dsm_acquire_page(kvm, slot, gfn, 0, write, NULL);
 		if (ret < 0)
 			goto out_release;
 	}
@@ -356,7 +356,7 @@ int kvm_dsm_vcpu_acquire(struct kvm_vcpu *vcpu, struct kvm_memslots **slots,
 	for (gfn = gpa >> PAGE_SHIFT; gfn <= gfn_end; gfn++) {
 		slot = __gfn_to_memslot(memslots, gfn);
 		ret = __kvm_dsm_acquire_page(vcpu->kvm, slot,
-				gfn, is_smm(vcpu), write);
+				gfn, is_smm(vcpu), write, NULL);
 		if (ret < 0)
 			goto out_release;
 	}
@@ -688,7 +688,7 @@ void kvm_dsm_free(struct kvm *kvm)
 }
 
 static int kvm_dsm_page_fault(struct kvm *kvm, struct kvm_memory_slot *memslot,
-		gfn_t gfn, bool is_smm, int write)
+		gfn_t gfn, bool is_smm, int write, struct kvm_vcpu *vcpu)
 {
 	int ret;
 #ifdef KVM_DSM_PF_PROFILE
@@ -700,9 +700,9 @@ static int kvm_dsm_page_fault(struct kvm *kvm, struct kvm_memory_slot *memslot,
 #endif
 
 #ifdef IVY_KVM_DSM
-	ret = ivy_kvm_dsm_page_fault(kvm, memslot, gfn, is_smm, write);
+	ret = ivy_kvm_dsm_page_fault(kvm, memslot, gfn, is_smm, write, vcpu);
 #elif defined(TARDIS_KVM_DSM)
-	ret = tardis_kvm_dsm_page_fault(kvm, memslot, gfn, is_smm, write);
+	ret = tardis_kvm_dsm_page_fault(kvm, memslot, gfn, is_smm, write, vcpu);
 #endif
 
 #ifdef KVM_DSM_PF_PROFILE
@@ -755,7 +755,7 @@ int kvm_dsm_memcpy(struct kvm *kvm, unsigned long host_virt_addr,
 			gfn_npages = min(npages - i, (unsigned long)(memslot->base_gfn +
 						memslot->npages - gfn));
 			for (j = 0; j < gfn_npages; j++) {
-				ret = kvm_dsm_page_fault(kvm, memslot, gfn + j, is_smm, write);
+				ret = kvm_dsm_page_fault(kvm, memslot, gfn + j, is_smm, write, NULL);
 				if (ret < 0)
 					goto out_unlock;
 			}
@@ -842,7 +842,7 @@ int kvm_dsm_mempin(struct kvm *kvm, unsigned long host_virt_addr,
 			gfn_npages = min(npages - i, (unsigned long)(memslot->base_gfn +
 						memslot->npages - gfn));
 			for (j = 0; j < gfn_npages; j++) {
-				ret = kvm_dsm_page_fault(kvm, memslot, gfn + j, is_smm, write);
+				ret = kvm_dsm_page_fault(kvm, memslot, gfn + j, is_smm, write, NULL);
 				if (ret < 0)
 					goto out_unlock;
 			}
