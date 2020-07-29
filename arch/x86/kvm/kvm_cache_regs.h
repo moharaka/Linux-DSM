@@ -29,6 +29,11 @@ static inline unsigned long kvm_rip_read(struct kvm_vcpu *vcpu)
 	return kvm_register_read(vcpu, VCPU_REGS_RIP);
 }
 
+static inline unsigned long kvm_rbp_read(struct kvm_vcpu *vcpu)
+{
+	return kvm_register_read(vcpu, VCPU_REGS_RBP);
+}
+
 static inline void kvm_rip_write(struct kvm_vcpu *vcpu, unsigned long val)
 {
 	kvm_register_write(vcpu, VCPU_REGS_RIP, val);

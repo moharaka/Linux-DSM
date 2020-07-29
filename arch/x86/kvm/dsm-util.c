@@ -16,6 +16,7 @@
 #include <linux/kvm_host.h>
 #include <linux/kvm.h>
 #include "mmu.h"
+#include "x86.h"
 #include "dsm.h" /* KVM_DSM_DEBUG */
 #include "dsm-util.h"
 #include "xbzrle.h"
@@ -308,11 +309,34 @@ int kvm_write_guest_page_nonlocal(struct kvm *kvm,
 }
 
 #ifdef KVM_DSM_PF_PROFILE
-/*
-void kvm_dsm_pf_get_calltrace()
+void kvm_dsm_pf_get_calltrace(struct kvm_vcpu *vcpu, unsigned long *ret, int length)
 {
+	int idx;
+	unsigned long bp, ra;
+	unsigned long buff[2];
+	struct x86_exception exception;
+	unsigned long stack_limit;
+	
+	bp = kvm_rbp_read(vcpu);
+	stack_limit = ALIGN((bp + PAGE_SIZE), PAGE_SIZE);//limiting to one page (we can do better ?)
+
+	for(idx=0; bp < stack_limit && idx<2; idx++)
+	{
+		//bp_gpa = kvm_mmu_gva_to_gpa_read(vcpu, bp, &exception);
+
+		if (kvm_read_guest_virt(&vcpu->arch.emulate_ctxt, bp, buff, sizeof(buff), &exception)) 
+			break;
+		
+		bp = buff[0];
+		ra = buff[1];
+
+		ret[idx]=ra;
+
+		idx++;
+	}
+
+	return idx;
 }
-*/
 
 rwlock_t trace_lock = __RW_LOCK_UNLOCKED(trace_lock);
 void kvm_dsm_pf_trace(struct kvm *kvm, struct kvm_dsm_memory_slot *slot,
@@ -320,15 +344,14 @@ void kvm_dsm_pf_trace(struct kvm *kvm, struct kvm_dsm_memory_slot *slot,
 {
 	unsigned long flags;
 	unsigned long index;
-	struct kvm_vcpu *first_vcpu=kvm->vcpus[kvm->arch.dsm_id];
-	unsigned long rip=0;
-	struct task_struct *task=NULL;
-	task=pid_task(first_vcpu->pid, PIDTYPE_PID);
-	//if(first_vcpu->mode&EXITING_GUEST_MODE || first_vcpu->mode&OUTSIDE_GUEST_MODE)
-	if(first_vcpu->mode==OUTSIDE_GUEST_MODE && task->pid==current->pid)
-		rip=kvm_rip_read(first_vcpu);
-	//printk(KERN_INFO "%s: node-%d vcpu pid %u current pid %u mode %u rip %lx\n",
-	//		__func__, kvm->arch.dsm_id, task? task->pid:0, current->pid, first_vcpu->mode, rip);
+	unsigned long ips[KVM_DSM_PF_PRNT_MAX]={[0 ... KVM_DSM_PF_PRNT_MAX-1] = 0};
+	//struct task_struct *task=NULL;
+
+	if(vcpu)
+	{
+		ips[0]=kvm_rip_read(vcpu);
+		kvm_dsm_pf_get_calltrace(vcpu, ips+1, KVM_DSM_PF_PRNT_MAX-1);
+	}
 
 	/* Data race here doesn't matter, I suppose. */
 	read_lock_irqsave(&trace_lock, flags);
@@ -344,13 +367,17 @@ void kvm_dsm_pf_trace(struct kvm *kvm, struct kvm_dsm_memory_slot *slot,
 		slot->vfn_dsm_state[index].read_pf++;
 		WARN_ON(slot->vfn_dsm_state[index].read_pf == 0);
 	}
-	if(rip)
+	//faults
+	slot->vfn_dsm_state[index].pf++;
+
+	if(vcpu)
 	{
 		int i;
 		int exist=0;
-		for(i=0; i<KVM_DSM_PF_RIP_MAX; i++)
+		for(i=0; i<KVM_DSM_PF_IPS_MAX; i++)
 		{
-			if(slot->vfn_dsm_state[index].rip[i]==rip)
+			//unsigned long ips[KVM_DSM_PF_IPS_MAX][KVM_DSM_PF_PRNT_MAX];
+			if(slot->vfn_dsm_state[index].ips[i][0]==ips[0])
 			{
 				exist=1;
 				break;
@@ -360,11 +387,15 @@ void kvm_dsm_pf_trace(struct kvm *kvm, struct kvm_dsm_memory_slot *slot,
 		if(!exist)
 		{
 			//place in first empty slot
-			for(i=0; i<KVM_DSM_PF_RIP_MAX; i++)
+			for(i=0; i<KVM_DSM_PF_IPS_MAX; i++)
 			{
-				if(!slot->vfn_dsm_state[index].rip[i])
+				if(!slot->vfn_dsm_state[index].ips[i][0])
 				{
-					slot->vfn_dsm_state[index].rip[i]=rip;
+					int j_rip;
+					for(j_rip=0; j_rip<KVM_DSM_PF_PRNT_MAX; j_rip++)
+					{
+						slot->vfn_dsm_state[index].ips[i][j_rip]=ips[j_rip];
+					}
 					break;
 				}
 			}
@@ -378,9 +409,10 @@ struct dsm_profile_info {
 	hfn_t vfn;
 	gfn_t gfn;
 	bool is_smm;
+	unsigned pf;
 	unsigned read_pf;
 	unsigned write_pf;
-	unsigned long rip[KVM_DSM_PF_RIP_MAX];
+	unsigned long ips[KVM_DSM_PF_IPS_MAX][KVM_DSM_PF_PRNT_MAX];
 };
 
 /* Find the N pages with maximum read and write. */
@@ -394,12 +426,11 @@ static void __kvm_dsm_report_profile(struct kvm *kvm, int clean)
 	struct kvm_dsm_memory_slot *slot;
 	struct kvm_dsm_info *info;
 
-	unsigned read_faults = 0, write_faults = 0;
+	unsigned page_faults=0;
 	int i, j, k;
-	int i_rip;
+	int i_rip, j_rip;
 
-	struct dsm_profile_info read_most[N];
-	struct dsm_profile_info write_most[N];
+	struct dsm_profile_info faulted_most[N];
 
 /*
 	struct dsm_profile_info *read_most;
@@ -422,31 +453,21 @@ static void __kvm_dsm_report_profile(struct kvm *kvm, int clean)
 			slot = &slots->memslots[j];
 			for (k = 0; k < slot->npages; k++) {
 				info = &slot->vfn_dsm_state[k];
-				if (info->read_pf > read_faults && (i == 0 ||
-							info->read_pf < read_most[i - 1].read_pf)) {
-					read_faults = info->read_pf;
-					read_most[i].read_pf = info->read_pf;
-					read_most[i].write_pf = info->write_pf;
-					for(i_rip=0; i_rip<KVM_DSM_PF_RIP_MAX; i_rip++)
-						read_most[i].rip[i_rip] = info->rip[i_rip];
-					read_most[i].vfn = slot->base_vfn + k;
-					read_most[i].gfn = __kvm_dsm_vfn_to_gfn(slot, false,
-							slot->base_vfn + k, &read_most[i].is_smm, NULL);
-				}
-				if (info->write_pf > write_faults && (i == 0 ||
-							info->write_pf < write_most[i - 1].write_pf)) {
-					write_faults = info->write_pf;
-					write_most[i].read_pf = info->read_pf;
-					write_most[i].write_pf = info->write_pf;
-					for(i_rip=0; i_rip<KVM_DSM_PF_RIP_MAX; i_rip++)
-						write_most[i].rip[i_rip] = info->rip[i_rip];
-					write_most[i].vfn = slot->base_vfn + k;
-					write_most[i].gfn = __kvm_dsm_vfn_to_gfn(slot, false,
-							slot->base_vfn + k, &write_most[i].is_smm, NULL);
+				if (info->pf > page_faults && (i == 0 ||
+							info->pf < faulted_most[i - 1].pf)) {
+					page_faults = info->read_pf;
+					faulted_most[i].read_pf = info->read_pf;
+					faulted_most[i].write_pf = info->write_pf;
+					for(i_rip=0; i_rip<KVM_DSM_PF_IPS_MAX; i_rip++)
+						for(j_rip=0; j_rip<KVM_DSM_PF_PRNT_MAX; j_rip++)
+							faulted_most[i].ips[i_rip][j_rip] = info->ips[i_rip][j_rip];
+					faulted_most[i].vfn = slot->base_vfn + k;
+					faulted_most[i].gfn = __kvm_dsm_vfn_to_gfn(slot, false,
+							slot->base_vfn + k, &faulted_most[i].is_smm, NULL);
 				}
 			}
 		}
-		read_faults = write_faults = 0;
+		page_faults = 0;
 	}
 
 	write_lock_irqsave(&trace_lock, flags);
@@ -463,40 +484,31 @@ static void __kvm_dsm_report_profile(struct kvm *kvm, int clean)
 			{
 				info->read_pf=0;
 				info->write_pf=0;
-				for(i_rip=0; i_rip<KVM_DSM_PF_RIP_MAX; i_rip++)
-					info->rip[i_rip]=0;
+				for(i_rip=0; i_rip<KVM_DSM_PF_IPS_MAX; i_rip++)
+					for(j_rip=0; j_rip<KVM_DSM_PF_PRNT_MAX; j_rip++)
+						info->ips[i_rip][j_rip]=0;
 			}
 		}
 	}
 
 	srcu_read_unlock(&kvm->srcu, idx);
 
-	printk(KERN_INFO "kvm-dsm: node-%d most frequently read %d pages\n",
+	printk(KERN_INFO "kvm-dsm: node-%d most frequently faulted %d pages\n",
 			kvm->arch.dsm_id, N);
 	//printk(KERN_INFO "\tvfn\tgfn\tread\twrite\n");
 	printk(KERN_INFO "\tvfn\tgfn\tread\twrite\trip\n");
 	for (i = 0; i < N; i++) {
-		printk(KERN_INFO "\t%llx; [%llu,%d]; %u; %u;", read_most[i].vfn,
-				read_most[i].gfn, read_most[i].is_smm,
-				read_most[i].read_pf, read_most[i].write_pf
+		printk(KERN_INFO "\t%llx; [%llu,%d]; %u; %u; ", faulted_most[i].vfn,
+				faulted_most[i].gfn, faulted_most[i].is_smm,
+				faulted_most[i].read_pf, faulted_most[i].write_pf
 				);
-		for(i_rip=0; i_rip<KVM_DSM_PF_RIP_MAX; i_rip++)
+		for(i_rip=0; i_rip<KVM_DSM_PF_IPS_MAX; i_rip++)
 		{
-			printk(KERN_CONT " %lx", read_most[i].rip[i_rip]);
-		}
-		printk(KERN_CONT "\n");
-	}
-
-	printk(KERN_INFO "kvm-dsm: node-%d most frequently written %d pages\n",
-			kvm->arch.dsm_id, N);
-	printk(KERN_INFO "\tvfn\tgfn\tread\twrite\trip\n");
-	for (i = 0; i < N; i++) {
-		printk(KERN_INFO "\t%llx; [%llu,%d]; %u; %u;", write_most[i].vfn,
-				write_most[i].gfn, write_most[i].is_smm,
-				write_most[i].read_pf, write_most[i].write_pf);
-		for(i_rip=0; i_rip<KVM_DSM_PF_RIP_MAX; i_rip++)
-		{
-			printk(KERN_CONT " %lx", write_most[i].rip[i_rip]);
+			printk(KERN_CONT "\n\t");
+			for(j_rip=0; j_rip<KVM_DSM_PF_PRNT_MAX; j_rip++)
+			{
+				printk(KERN_CONT "%lx; ", faulted_most[i].ips[i_rip][j_rip]);
+			}
 		}
 		printk(KERN_CONT "\n");
 	}
