@@ -24,7 +24,7 @@
 #define KVM_HC_MIPS_EXIT_VM		7
 #define KVM_HC_MIPS_CONSOLE_OUTPUT	8
 #define KVM_HC_PRINT_STDOUT		9
-
+#define KVM_HC_ATOMIC_INC               10
 /*
  * hypercalls use architecture specific
  */

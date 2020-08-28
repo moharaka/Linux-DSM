@@ -31,7 +31,10 @@
 #include "assigned-dev.h"
 #include "pmu.h"
 #include "hyperv.h"
-
+#include "ktcp.h"
+#include "dsm-util.h"
+#include "ivy.h"
+#include <linux/kernel.h>
 #include <linux/clocksource.h>
 #include <linux/interrupt.h>
 #include <linux/kvm.h>
@@ -2746,9 +2749,10 @@ long kvm_arch_dev_ioctl(struct file *filp,
 {
 	void __user *argp = (void __user *)arg;
 	long r;
-
+	printk(KERN_INFO "********AU CAS OU 1  (%d),(%u),(%lu) *************\n",KVM_PAGE_POLICY,ioctl,arg);
 	switch (ioctl) {
 	case KVM_GET_MSR_INDEX_LIST: {
+		printk(KERN_INFO "********on a KVM_GET_MSR_INDEX_LIST (%d),(%u),(%lu) *************\n",KVM_GET_MSR_INDEX_LIST,ioctl,arg);
 		struct kvm_msr_list __user *user_msr_list = argp;
 		struct kvm_msr_list msr_list;
 		unsigned n;
@@ -2776,6 +2780,8 @@ long kvm_arch_dev_ioctl(struct file *filp,
 	}
 	case KVM_GET_SUPPORTED_CPUID:
 	case KVM_GET_EMULATED_CPUID: {
+		printk(KERN_INFO "********on a KVM_GET_SUPPORTED_CPUID (%d),(%u),(%lu) *************\n",KVM_GET_SUPPORTED_CPUID,ioctl,arg);
+		printk(KERN_INFO "********on a KVM_GET_EMULATED_CPUID (%d),(%u),(%lu) *************\n",KVM_GET_EMULATED_CPUID,ioctl,arg);
 		struct kvm_cpuid2 __user *cpuid_arg = argp;
 		struct kvm_cpuid2 cpuid;
 
@@ -2795,11 +2801,16 @@ long kvm_arch_dev_ioctl(struct file *filp,
 		break;
 	}
 	case KVM_X86_GET_MCE_CAP_SUPPORTED: {
+		printk(KERN_INFO "********on a KVM_X86_GET_MCE_CAP_SUPPORTED (%d),(%u),(%lu) *************\n",KVM_X86_GET_MCE_CAP_SUPPORTED,ioctl,arg);
 		r = -EFAULT;
 		if (copy_to_user(argp, &kvm_mce_cap_supported,
 				 sizeof(kvm_mce_cap_supported)))
 			goto out;
 		r = 0;
+		break;
+	}case KVM_PAGE_POLICY: {
+		printk(KERN_INFO "kvm PAGE POLICY REÇU 1 (%d) \n",KVM_PAGE_POLICY);
+		printk(KERN_INFO "********on a KVM_PAGE_POLICY (%d),(%u),(%lu) *************\n",KVM_PAGE_POLICY,ioctl,arg);
 		break;
 	}
 	default:
@@ -3382,6 +3393,7 @@ long kvm_arch_vcpu_ioctl(struct file *filp,
 	struct kvm_vcpu *vcpu = filp->private_data;
 	void __user *argp = (void __user *)arg;
 	int r;
+	printk(KERN_INFO "********AU CAS OU 2  (%d) *************\n",KVM_PAGE_POLICY);
 	union {
 		struct kvm_lapic_state *lapic;
 		struct kvm_xsave *xsave;
@@ -3650,6 +3662,11 @@ long kvm_arch_vcpu_ioctl(struct file *filp,
 		if (copy_from_user(&cap, argp, sizeof(cap)))
 			goto out;
 		r = kvm_vcpu_ioctl_enable_cap(vcpu, &cap);
+		break;
+	}
+	case KVM_PAGE_POLICY: {
+		printk(KERN_INFO "kvm PAGE POLICY REÇU 2 (%d) \n",KVM_PAGE_POLICY);
+		
 		break;
 	}
 	default:
@@ -3954,6 +3971,7 @@ long kvm_arch_vm_ioctl(struct file *filp,
 	struct kvm *kvm = filp->private_data;
 	void __user *argp = (void __user *)arg;
 	int r = -ENOTTY;
+	printk(KERN_INFO "********AU CAS OU 3  (%d) *************\n",KVM_PAGE_POLICY);
 	/*
 	 * This union makes it completely explicit to gcc-3.x
 	 * that these two variables' stack usage should be
@@ -4209,6 +4227,11 @@ long kvm_arch_vm_ioctl(struct file *filp,
 		if (copy_from_user(&cap, argp, sizeof(cap)))
 			goto out;
 		r = kvm_vm_ioctl_enable_cap(kvm, &cap);
+		break;
+	}
+	case KVM_PAGE_POLICY: {
+		printk(KERN_INFO "kvm PAGE POLICY REÇU 3 (%d) \n",KVM_PAGE_POLICY);
+		
 		break;
 	}
 	default:
@@ -6189,6 +6212,17 @@ int kvm_emulate_hypercall(struct kvm_vcpu *vcpu)
 		kvm_pv_print_stdout(vcpu, a0, a1, a2, a3);
 		ret = 0;
 		break;
+	case KVM_HC_ATOMIC_INC:
+		printk(KERN_INFO "%s : ********here are the jiffies infos \n jiffies addr : %p\n jiffies size : %u and value %lu",__func__,a0,a2,a3);
+		/*
+			a0 represents the jiffies gpa,
+			a1 is the jiffies gva 
+			a1 is the the size of the jiffies variable
+			a2 is the jiffies value.
+		*/
+		// broadcast connection
+		ret = send_upd_request(vcpu->kvm,a0,a1,a2,a3);
+		break;	
 	default:
 		ret = -KVM_ENOSYS;
 		break;
