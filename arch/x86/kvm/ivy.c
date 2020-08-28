@@ -132,9 +132,6 @@ static int kvm_dsm_fetch(struct kvm *kvm, uint16_t dest_id, bool from_server,
 	if (req->req_type == DSM_REQ_INVALIDATE) {
 		ret = network_ops.receive(*conn_sock, data, 0, &tx_add);
 	}
-	if(req->req_type == DSM_REQ_UPDATE){
-		ret = 0;
-	}
 	else {
 retry:
 		ret = network_ops.receive(*conn_sock, data, SOCK_NONBLOCK, &tx_add);
@@ -158,7 +155,7 @@ done:
 	return ret;
 }
 
-int send_upd_request(struct kvm *kvm, phys_addr_t var_gpa,unsigned long var_gva,long var_size,unsigned long var_datas){
+int send_upd_request(struct kvm *kvm, phys_addr_t var_gpa,unsigned long var_gva, long var_size,long var_datas){
 	int dest_id; //dest id
 	int ret = 0; //return value
 	char r = 1;
@@ -182,14 +179,14 @@ int send_upd_request(struct kvm *kvm, phys_addr_t var_gpa,unsigned long var_gva,
 		/* check if we have already passed the nodes number */
 		BUG_ON(dest_id >= kvm->arch.cluster_iplist_len);
 		ret = kvm_dsm_fetch(kvm, dest_id, false, &req, &r, &resp);
-		if (ret != 0){
+		if (ret < 0){
 			printk(KERN_INFO "in function send upd update we had a pb; returned %d, and the ip list length is %d", ret,kvm->arch.cluster_iplist_len);
 			return ret;
 		}
 			
-		printk(KERN_INFO "kvm[%d] sent request update to kvm[%d] req_type[%s] gfn[%ld,%ld] and the data for update is %ld, the ip_list_length is %d",
+		printk(KERN_INFO "kvm[%d] sent request update to kvm[%d] req_type[%s] gfn[%llu,%ld] and the data for update is %ld",
 			kvm->arch.dsm_id, dest_id, req_desc[req.req_type],
-			req.gfn, req.size,req.var_data,kvm->arch.cluster_iplist_len);
+			req.gfn, req.size,req.var_data);
 	}
 
 	return 0;
@@ -601,12 +598,12 @@ retry_handle_req:
 				goto out_unlock;
 			break;
 		case DSM_REQ_UPDATE:
-			printk(KERN_WARNING "%s : the updated was captured",__func__);
 			ret = dsm_handle_send_upd_req(kvm, conn_sock, memslot, slot, &req,
 					&retry, vfn, page, &tx_add);
 			if (ret < 0)
 				goto out_unlock;
 			break;
+
 		default:
 			BUG();
 		}
