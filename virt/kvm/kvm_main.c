@@ -2540,7 +2540,10 @@ static long kvm_vcpu_ioctl(struct file *filp,
 	int r;
 	struct kvm_fpu *fpu = NULL;
 	struct kvm_sregs *kvm_sregs = NULL;
+	//
+	printk(KERN_INFO, "AU CAS OU : [%u],[%u]\n", KVM_PAGE_POLICY,ioctl);
 
+//
 	if (vcpu->kvm->mm != current->mm)
 		return -EIO;
 
@@ -2562,6 +2565,7 @@ static long kvm_vcpu_ioctl(struct file *filp,
 		return r;
 	switch (ioctl) {
 	case KVM_RUN:
+		printk(KERN_INFO, "on a KVM_RUN \n");
 		r = -EINVAL;
 		if (arg)
 			goto out;
@@ -2579,6 +2583,7 @@ static long kvm_vcpu_ioctl(struct file *filp,
 		trace_kvm_userspace_exit(vcpu->run->exit_reason, r);
 		break;
 	case KVM_GET_REGS: {
+		printk(KERN_INFO, "on a KVM_GET_REGS \n");
 		struct kvm_regs *kvm_regs;
 
 		r = -ENOMEM;
@@ -2597,6 +2602,7 @@ out_free1:
 		break;
 	}
 	case KVM_SET_REGS: {
+		printk(KERN_INFO, "on a KVM_SET_REGS \n");
 		struct kvm_regs *kvm_regs;
 
 		r = -ENOMEM;
@@ -2610,6 +2616,7 @@ out_free1:
 		break;
 	}
 	case KVM_GET_SREGS: {
+		printk(KERN_INFO, "on a KVM_GET_SREGS \n");
 		kvm_sregs = kzalloc(sizeof(struct kvm_sregs), GFP_KERNEL);
 		r = -ENOMEM;
 		if (!kvm_sregs)
@@ -2624,6 +2631,7 @@ out_free1:
 		break;
 	}
 	case KVM_SET_SREGS: {
+		printk(KERN_INFO, "on a KVM_SET_SREGS \n");
 		kvm_sregs = memdup_user(argp, sizeof(*kvm_sregs));
 		if (IS_ERR(kvm_sregs)) {
 			r = PTR_ERR(kvm_sregs);
@@ -2634,6 +2642,7 @@ out_free1:
 		break;
 	}
 	case KVM_GET_MP_STATE: {
+		printk(KERN_INFO, "on a KVM_GET_MP_STATE \n");
 		struct kvm_mp_state mp_state;
 
 		r = kvm_arch_vcpu_ioctl_get_mpstate(vcpu, &mp_state);
@@ -2646,6 +2655,7 @@ out_free1:
 		break;
 	}
 	case KVM_SET_MP_STATE: {
+		printk(KERN_INFO, "on a KVM_SET_MP_STATE \n");
 		struct kvm_mp_state mp_state;
 
 		r = -EFAULT;
@@ -2655,6 +2665,7 @@ out_free1:
 		break;
 	}
 	case KVM_TRANSLATE: {
+		printk(KERN_INFO, "on a KVM_TRANSLATE \n");
 		struct kvm_translation tr;
 
 		r = -EFAULT;
@@ -2670,6 +2681,7 @@ out_free1:
 		break;
 	}
 	case KVM_SET_GUEST_DEBUG: {
+		printk(KERN_INFO, "on a KVM_SET_GUEST_DEBUG \n");
 		struct kvm_guest_debug dbg;
 
 		r = -EFAULT;
@@ -2679,6 +2691,7 @@ out_free1:
 		break;
 	}
 	case KVM_SET_SIGNAL_MASK: {
+		printk(KERN_INFO, "on a KVM_SET_SIGNAL_MASK \n");
 		struct kvm_signal_mask __user *sigmask_arg = argp;
 		struct kvm_signal_mask kvm_sigmask;
 		sigset_t sigset, *p;
@@ -2702,6 +2715,7 @@ out_free1:
 		break;
 	}
 	case KVM_GET_FPU: {
+		printk(KERN_INFO, "on a KVM_GET_FPU \n");
 		fpu = kzalloc(sizeof(struct kvm_fpu), GFP_KERNEL);
 		r = -ENOMEM;
 		if (!fpu)
@@ -2716,6 +2730,7 @@ out_free1:
 		break;
 	}
 	case KVM_SET_FPU: {
+		printk(KERN_INFO, "on a KVM_SET_FPU \n");
 		fpu = memdup_user(argp, sizeof(*fpu));
 		if (IS_ERR(fpu)) {
 			r = PTR_ERR(fpu);
@@ -2723,6 +2738,10 @@ out_free1:
 			goto out;
 		}
 		r = kvm_arch_vcpu_ioctl_set_fpu(vcpu, fpu);
+		break;
+	}
+	case KVM_PAGE_POLICY:{
+		printk(KERN_INFO, "RECEPTION DE L'IOCTL : [%u]\n", KVM_PAGE_POLICY);
 		break;
 	}
 	default:

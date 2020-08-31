@@ -3966,6 +3966,9 @@ long kvm_arch_vm_ioctl(struct file *filp,
 	} u;
 
 	switch (ioctl) {
+	case KVM_PAGE_POLICY:
+		printk(KERN_INFO "on a réussi");
+		break;
 	case KVM_SET_TSS_ADDR:
 		r = kvm_vm_ioctl_set_tss_addr(kvm, arg);
 		break;

@@ -1335,6 +1335,17 @@ struct kvm_assigned_pci_dev {
 #define KVM_DEV_IRQ_HOST_MASK	 0x00ff
 #define KVM_DEV_IRQ_GUEST_MASK   0xff00
 
+//Our new ioctl
+
+//begin
+struct kvm_page_pol{
+	long gpn; // GPN number
+	char pol; //policy needed to be applied
+};
+#define KVM_PAGE_POLICY _IOWR(KVMIO,0xc1, struct kvm_page_pol)
+//returns a positive number in good case and a negative number in case of failure
+//end
+
 struct kvm_assigned_irq {
 	__u32 assigned_dev_id;
 	__u32 host_irq; /* ignored (legacy field) */
