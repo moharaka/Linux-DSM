@@ -1342,7 +1342,9 @@ struct kvm_page_pol{
 	long gpn; // GPN number
 	char pol; //policy needed to be applied
 };
-#define KVM_PAGE_POLICY _IOWR(KVMIO,0xc1, struct kvm_page_pol)
+
+#define KVM_PAGE_POLICY _IOWR(KVMIO,0x21, struct kvm_page_pol)
+
 //returns a positive number in good case and a negative number in case of failure
 //end
 
