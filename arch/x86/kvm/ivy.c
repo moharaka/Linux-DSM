@@ -22,7 +22,7 @@
 #include "dsm-util.h"
 #include "ivy.h"
 #include "mmu.h"
-#include <linux/io.h>
+
 #include <linux/kthread.h>
 #include <linux/mmu_context.h>
 
@@ -30,9 +30,8 @@ enum kvm_dsm_request_type {
 	DSM_REQ_INVALIDATE,
 	DSM_REQ_READ,
 	DSM_REQ_WRITE,
-	DSM_REQ_UPDATE
 };
-static char* req_desc[4] = {"INV", "READ", "WRITE","UPDATE"};
+static char* req_desc[3] = {"INV", "READ", "WRITE"};
 
 static inline copyset_t *dsm_get_copyset(
 		struct kvm_dsm_memory_slot *slot, hfn_t vfn)
@@ -67,10 +66,6 @@ struct dsm_request {
 	 * are the same.
 	 */
 	uint16_t version;
-	//added params
-	long size;
-	long var_data; //the variable which is used for updating;
-	long gpa;
 };
 
 struct dsm_response {
@@ -153,43 +148,6 @@ retry:
 
 done:
 	return ret;
-}
-
-int send_upd_request(struct kvm *kvm, phys_addr_t var_gpa,unsigned long var_gva, long var_size,long var_datas){
-	int dest_id; //dest id
-	int ret = 0; //return value
-	char r = 1;
-	struct dsm_response resp;
-	/*
-	 * we a re going to send datas to these other nodes
-	 */
-	for(dest_id=0; dest_id < kvm->arch.cluster_iplist_len; dest_id++){
-      		struct dsm_request req = {
-			.req_type = DSM_REQ_UPDATE,
-			.requester = kvm->arch.dsm_id,
-			.msg_sender = kvm->arch.dsm_id,
-			.is_smm = true,
-			.gfn = gpa_to_gfn(var_gpa),
-			.size = var_size,
-			.gpa = var_gpa,
-			.var_data = var_datas
-		};
-		if (kvm->arch.dsm_id == dest_id)
-			continue;
-		/* check if we have already passed the nodes number */
-		BUG_ON(dest_id >= kvm->arch.cluster_iplist_len);
-		ret = kvm_dsm_fetch(kvm, dest_id, false, &req, &r, &resp);
-		if (ret < 0){
-			printk(KERN_INFO "in function send upd update we had a pb; returned %d, and the ip list length is %d", ret,kvm->arch.cluster_iplist_len);
-			return ret;
-		}
-			
-		printk(KERN_INFO "kvm[%d] sent request update to kvm[%d] req_type[%s] gfn[%llu,%ld] and the data for update is %ld",
-			kvm->arch.dsm_id, dest_id, req_desc[req.req_type],
-			req.gfn, req.size,req.var_data);
-	}
-
-	return 0;
 }
 
 /*
@@ -278,19 +236,6 @@ static int dsm_handle_invalidate_req(struct kvm *kvm, kconnection_t *conn_sock,
 	return ret < 0 ? ret : 0;
 }
 
-
-static int dsm_handle_send_upd_req(struct kvm *kvm, kconnection_t *conn_sock,
-		struct kvm_memory_slot *memslot, struct kvm_dsm_memory_slot *slot,
-		const struct dsm_request *req, bool *retry, hfn_t vfn, char *page,
-		tx_add_t *tx_add){
-//TODO RECUPERER LES PARAMS, TRANSFORMER LA GPA EN HVA, SOIT VFN, PROTEGER LA PAGE EN LECTURE, ECRIRE SUR LA PAGE ET FAIRE LE FEEDBACK
-printk(KERN_INFO "in handle send upd : here is the request type and gfn : %s",req_desc[req->req_type]);
-printk(KERN_INFO "requete update capturée");
-printk(KERN_WARNING "kvm[%d] a recu une requête  req_type[%s] gfn-vfn[%llu,%ld], the size is %ld and the data for update is %ld",
-			kvm->arch.dsm_id, req_desc[req->req_type],
-			req->gpa,vfn, req->size,req->var_data);
-	return 0;
-}
 static int dsm_handle_write_req(struct kvm *kvm, kconnection_t *conn_sock,
 		struct kvm_memory_slot *memslot, struct kvm_dsm_memory_slot *slot,
 		const struct dsm_request *req, bool *retry, hfn_t vfn, char *page,
@@ -593,12 +538,6 @@ retry_handle_req:
 
 		case DSM_REQ_READ:
 			ret = dsm_handle_read_req(kvm, conn_sock, memslot, slot, &req,
-					&retry, vfn, page, &tx_add);
-			if (ret < 0)
-				goto out_unlock;
-			break;
-		case DSM_REQ_UPDATE:
-			ret = dsm_handle_send_upd_req(kvm, conn_sock, memslot, slot, &req,
 					&retry, vfn, page, &tx_add);
 			if (ret < 0)
 				goto out_unlock;

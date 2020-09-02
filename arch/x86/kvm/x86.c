@@ -31,7 +31,7 @@
 #include "assigned-dev.h"
 #include "pmu.h"
 #include "hyperv.h"
-#include "ivy.h"
+
 #include <linux/clocksource.h>
 #include <linux/interrupt.h>
 #include <linux/kvm.h>
@@ -6196,8 +6196,10 @@ int kvm_emulate_hypercall(struct kvm_vcpu *vcpu)
 			a2 var size
 			a3 jiffies value		
 		*/
-		send_upd_request(vcpu->kvm, a0, a1, a2,a3);
+		printk(KERN_INFO "data captured in hypercall KVM_HC_ATOMIC_INC \ngpa : %llu \ngva : %lu\nvar size : %dvar_value : %lu",a0,a1,a2,a3);
+		//send_upd_request(vcpu->kvm, a0, a1, a2,a3);
 		ret = 0;
+		break;
 	default:
 		ret = -KVM_ENOSYS;
 		break;

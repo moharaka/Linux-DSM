@@ -100,12 +100,6 @@ struct kvm_userspace_memory_region {
 	__u64 memory_size; /* bytes */
 	__u64 userspace_addr; /* start of the userspace allocated memory */
 };
-/* Je definis ma strucuture */
-/* for KVM_PAGE_POLICY*/
-struct kvm_page_pol {
-	long gpn;/* numéro de la page */
-	char pol;/* politique à appliquer */
-};
 
 /*
  * The bit 0 ~ bit 15 of kvm_memory_region::flags are visible for userspace,
@@ -707,8 +701,6 @@ struct kvm_ppc_smmu_info {
 #define KVM_GET_API_VERSION       _IO(KVMIO,   0x00)
 #define KVM_CREATE_VM             _IO(KVMIO,   0x01) /* returns a VM fd */
 #define KVM_GET_MSR_INDEX_LIST    _IOWR(KVMIO, 0x02, struct kvm_msr_list)
-/*Ici on defini notre nouveau ioctl*/
-#define KVM_PAGE_POLICY _IOWR(KVMIO, 0x20, struct kvm_page_pol) /* renvoie le numéro d'ioctl à appliquer */
 
 #define KVM_S390_ENABLE_SIE       _IO(KVMIO,   0x06)
 /*
