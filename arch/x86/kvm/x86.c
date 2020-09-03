@@ -2746,20 +2746,9 @@ long kvm_arch_dev_ioctl(struct file *filp,
 {
 	void __user *argp = (void __user *)arg;
 	long r;
-	
-	
-	printk(KERN_WARNING "*******ce qui est reçu DE KVM_PAGE_POLICY ********* (%u)\n",KVM_PAGE_POLICY);
 
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:{
-		printk(KERN_WARNING "******* kvm_arch_dev_ioctl *********\n");
-		printk(KERN_WARNING "*******on a réussi ********* (%u)\n",KVM_PAGE_POLICY);
-		r=0;
-}
 	case KVM_GET_MSR_INDEX_LIST: {
-		printk(KERN_WARNING "******* kvm_arch_dev_ioctl *********\n");
-		printk(KERN_WARNING "*******KVM_GET_MSR_INDEX_LIST ********* (%u)\n",KVM_GET_MSR_INDEX_LIST);
-
 		struct kvm_msr_list __user *user_msr_list = argp;
 		struct kvm_msr_list msr_list;
 		unsigned n;
@@ -3401,20 +3390,8 @@ long kvm_arch_vcpu_ioctl(struct file *filp,
 	} u;
 
 	u.buffer = NULL;
-	
-
-	printk(KERN_WARNING "*******ce qui est reçu de KVM_PAGE_POLICY ********* (%u)\n",KVM_PAGE_POLICY);
-
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:{
-		printk(KERN_WARNING "******* kvm_arch_vcpu_ioctl *********\n");
-		printk(KERN_WARNING "*******on a réussi ********* (%u)\n",KVM_PAGE_POLICY);
-		r=0;
-		break;
-}
 	case KVM_GET_LAPIC: {
-		printk(KERN_WARNING "******* kvm_arch_vcpu_ioctl *********\n");
-		printk(KERN_WARNING "*******KVM_GET_LAPIC ********* (%u)\n",KVM_GET_LAPIC);
 		r = -EINVAL;
 		if (!lapic_in_kernel(vcpu))
 			goto out;
@@ -3987,19 +3964,9 @@ long kvm_arch_vm_ioctl(struct file *filp,
 		struct kvm_pit_state2 ps2;
 		struct kvm_pit_config pit_config;
 	} u;
-	
-	printk(KERN_WARNING "*******ce qui est reçu de KVM_PAGE_POLICY ********* (%u)\n",KVM_PAGE_POLICY);
 
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:{
-		printk(KERN_WARNING "******* kvm_arch_vm_ioctl *********\n");
-		printk(KERN_WARNING "*******on a réussi ********* (%u)\n",KVM_PAGE_POLICY);
-		r=0;
-		break;
-}
 	case KVM_SET_TSS_ADDR:
-		printk(KERN_WARNING "******* kvm_arch_vm_ioctl *********\n");
-		printk(KERN_WARNING "******* KVM_SET_TSS_ADDR ********* (%u)\n", KVM_SET_TSS_ADDR);
 		r = kvm_vm_ioctl_set_tss_addr(kvm, arg);
 		break;
 	case KVM_SET_IDENTITY_MAP_ADDR: {

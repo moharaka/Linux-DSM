@@ -1343,12 +1343,12 @@ struct kvm_page_pol{
 	char pol; //policy needed to be applied
 };
 
-#define KVM_PAGE_POLICY _IOWR(KVMIO,0x21, struct kvm_page_pol)
+#define KVM_PAGE_POLICY _IOWR(KVMIO,0x210, struct kvm_page_pol)
 
 //returns a positive number in good case and a negative number in case of failure
 //end
 
-#define KVM_TEST 200
+#define KVM_TEST _IO(KVMIO,0x211)
 
 struct kvm_assigned_irq {
 	__u32 assigned_dev_id;
