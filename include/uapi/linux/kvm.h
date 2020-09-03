@@ -1348,6 +1348,8 @@ struct kvm_page_pol{
 //returns a positive number in good case and a negative number in case of failure
 //end
 
+#define KVM_TEST 200
+
 struct kvm_assigned_irq {
 	__u32 assigned_dev_id;
 	__u32 host_irq; /* ignored (legacy field) */
