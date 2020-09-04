@@ -3965,7 +3965,14 @@ long kvm_arch_vm_ioctl(struct file *filp,
 		struct kvm_pit_config pit_config;
 	} u;
 
+	//if(KVM_PAGE_POLICY < 0)
+	//	perror("----2----UNE ERREUR S'EST PRODUITE");
+	
 	switch (ioctl) {
+	case KVM_PAGE_POLICY:
+		printk(KERN_WARNING "UNE ERREUR S'EST PRODUITE");
+
+		break;
 	case KVM_SET_TSS_ADDR:
 		r = kvm_vm_ioctl_set_tss_addr(kvm, arg);
 		break;
