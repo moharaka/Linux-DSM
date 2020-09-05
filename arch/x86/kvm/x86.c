@@ -3984,11 +3984,13 @@ long kvm_arch_vm_ioctl(struct file *filp,
 		struct kvm_pit_state2 ps2;
 		struct kvm_pit_config pit_config;
 	} u;
-//
+//à enlever
 	printk(KERN_INFO "ON EST DEHORS (%u)", KVM_PAGE_POLICY);
-
+	struct kvm_page_pol __user *user_page_pol = argp;
+	struct kvm_page_pol act;
+	printk(KERN_INFO "La page (%lu) et la politique (%c)...\n", act.gpn, act.pol);
 	switch (ioctl) {
-//
+//jusqu'ici
 	case KVM_PAGE_POLICY:
 		printk(KERN_INFO "ON EST ENTRE");
 		struct kvm_page_pol __user *user_page_pol = argp;
