@@ -291,26 +291,38 @@ static int dsm_handle_send_upd_req(struct kvm *kvm, kconnection_t *conn_sock,
 		struct kvm_memory_slot *memslot, struct kvm_dsm_memory_slot *slot,
 		const struct dsm_request *req, bool *retry, hfn_t vfn, char *page,
 		tx_add_t *tx_add){
-		struct kvm_memslots *slots;
+		//void *data_to_print;
 //TODO RECUPERER LES PARAMS, TRANSFORMER LA GPA EN HVA, SOIT VFN, PROTEGER LA PAGE EN LECTURE, ECRIRE SUR LA PAGE ET FAIRE LE FEEDBACK
 printk(KERN_INFO "in handle send upd : here is the request type and gfn : %s",req_desc[req->req_type]);
 printk(KERN_INFO "requete update capturée");
-printk(KERN_WARNING "kvm[%d] a recu une requête  req_type[%s] gfn-vfn[%llu,%llu], the gva is : %lu the size is %ld and the data for update is %ld",
-			kvm->arch.dsm_id, req_desc[req->req_type],
-			req->gfn,vfn,req->gva, req->size,req->var_data);
-	if(kvm_dsm_acquire(kvm,&slots, gfn_to_gpa(req->gfn), req->size,false) < 0){
+printk(KERN_WARNING "kvm[%d] a recu une requête  req_type[%s] gfn-vfn[%llu,%llu], the gva is : %lu the size is %ld and the data for update is %ld",kvm->arch.dsm_id, req_desc[req->req_type],req->gfn,vfn,req->gva, req->size,req->var_data);
+	//TODO recuperer l'offset mettre à la place de zero et régler le problème de -14
+	int result_write = kvm_write_guest_page_nonlocal(kvm,memslot,req->gfn,req->var_data,0,  req->size);
+	printk(KERN_INFO "%s function : there is the result of writing %d",__func__,result_write);
+	if(result_write  < 0){
+		printk(KERN_INFO "%s function : DSM writing guest page non local failed",__func__);
+		return result_write;
+	}else{
+		printk(KERN_INFO "%s function : data written in the memory with kvm_write_guest_nonlocal");
+		printk(KERN_INFO "%s function : reading attempt to the memory");
+		//kvm_read_guest_page_nonlocal(kvm,memslot,req->gfn,data_to_print,0,  req->size);
+		//printk(KERN_WARNING "the stored value is %lu",data_to_print);
+		return 0;
+	}
+	
+	/*if(kvm_dsm_acquire(kvm,&slots, gfn_to_gpa(req->gfn), req->size,false) < 0){
 		printk(KERN_INFO "dsm acquire failed");
 		return -1;		
 	}else {
 		printk(KERN_INFO "dsm acquire done");
 		//TODO write in the guest page then release
-                /*if(kvm_write_guest(kvm, gfn_to_gpa(req->gfn),req->var_data, req->size)> 0){
+                if(kvm_write_guest(kvm, gfn_to_gpa(req->gfn),req->var_data, req->size)> 0){
 			printk(KERN_INFO "in %s, the data : %llu has been writen in gpa : %llu",__func__,req->var_data,gfn_to_gpa(req->gfn));
-			goto out;*/
+			goto out;
 		kvm_dsm_release(kvm, slots, gfn_to_gpa(req->gfn), req->size);
 		printk(KERN_INFO "dsm release done");
 		return 0;
-	}
+	}*/
 }
 
 static int dsm_handle_write_req(struct kvm *kvm, kconnection_t *conn_sock,
