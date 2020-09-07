@@ -919,6 +919,10 @@ long kvm_arch_vcpu_ioctl(struct file *filp,
 	struct kvm_device_attr attr;
 
 	switch (ioctl) {
+	case KVM_PAGE_POLICY:
+		printk(KERN_INFO "ON EST ENTRE 2.1");
+		r=0;
+		break;
 	case KVM_ARM_VCPU_INIT: {
 		struct kvm_vcpu_init init;
 
@@ -1041,6 +1045,10 @@ long kvm_arch_vm_ioctl(struct file *filp,
 	void __user *argp = (void __user *)arg;
 
 	switch (ioctl) {
+	case KVM_PAGE_POLICY:
+		printk(KERN_INFO "ON EST ENTRE 2.2");
+		r=0;
+		break;
 	case KVM_CREATE_IRQCHIP: {
 		int ret;
 		if (!vgic_present)

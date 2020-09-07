@@ -1118,6 +1118,10 @@ long kvm_arch_vcpu_ioctl(struct file *filp, unsigned int ioctl,
 	long r;
 
 	switch (ioctl) {
+	case KVM_PAGE_POLICY:
+		printk(KERN_INFO "ON EST ENTRE 3.1");
+		r=0;
+		break;
 	case KVM_SET_ONE_REG:
 	case KVM_GET_ONE_REG: {
 		struct kvm_one_reg reg;
@@ -1222,6 +1226,10 @@ long kvm_arch_vm_ioctl(struct file *filp, unsigned int ioctl, unsigned long arg)
 	long r;
 
 	switch (ioctl) {
+	case KVM_PAGE_POLICY:
+		printk(KERN_INFO "ON EST ENTRE 3.2");
+		r=0;
+		break;
 	default:
 		r = -ENOIOCTLCMD;
 	}

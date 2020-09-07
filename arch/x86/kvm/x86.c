@@ -2748,6 +2748,10 @@ long kvm_arch_dev_ioctl(struct file *filp,
 	long r;
 
 	switch (ioctl) {
+	case KVM_PAGE_POLICY:
+		printk(KERN_INFO "ON EST ENTRE 1.1");
+		r=0;
+		break;
 	case KVM_GET_MSR_INDEX_LIST: {
 		struct kvm_msr_list __user *user_msr_list = argp;
 		struct kvm_msr_list msr_list;
@@ -3391,6 +3395,10 @@ long kvm_arch_vcpu_ioctl(struct file *filp,
 
 	u.buffer = NULL;
 	switch (ioctl) {
+	case KVM_PAGE_POLICY:
+		printk(KERN_INFO "ON EST ENTRE 1.2");
+		r=0;
+		break;
 	case KVM_GET_LAPIC: {
 		r = -EINVAL;
 		if (!lapic_in_kernel(vcpu))
@@ -3992,7 +4000,7 @@ long kvm_arch_vm_ioctl(struct file *filp,
 	switch (ioctl) {
 //jusqu'ici
 	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE");
+		printk(KERN_INFO "ON EST ENTRE 1.3");
 		struct kvm_page_pol __user *user_page_pol = argp;
 		struct kvm_page_pol act;
 	
