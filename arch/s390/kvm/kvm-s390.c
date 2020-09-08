@@ -1226,10 +1226,6 @@ long kvm_arch_vm_ioctl(struct file *filp,
 	int r;
 
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE 4.1");
-		r=0;
-		break;
 	case KVM_S390_INTERRUPT: {
 		struct kvm_s390_interrupt s390int;
 
@@ -3086,10 +3082,6 @@ long kvm_arch_vcpu_ioctl(struct file *filp,
 	long r;
 
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE 4.2");
-		r=0;
-		break;
 	case KVM_S390_IRQ: {
 		struct kvm_s390_irq s390irq;
 

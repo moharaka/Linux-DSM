@@ -2564,10 +2564,6 @@ static long kvm_vcpu_ioctl(struct file *filp,
 	if (r)
 		return r;
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE 5.1");
-		r=0;
-		break;
 	case KVM_RUN:
 		printk(KERN_INFO, "on a KVM_RUN \n");
 		r = -EINVAL;
@@ -2770,10 +2766,6 @@ static long kvm_vcpu_compat_ioctl(struct file *filp,
 		return -EIO;
 
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE 5.2");
-		r=0;
-		break;
 	case KVM_SET_SIGNAL_MASK: {
 		struct kvm_signal_mask __user *sigmask_arg = argp;
 		struct kvm_signal_mask kvm_sigmask;
@@ -2829,10 +2821,6 @@ static long kvm_device_ioctl(struct file *filp, unsigned int ioctl,
 	struct kvm_device *dev = filp->private_data;
 
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE 5.3");
-		r=0;
-		break;
 	case KVM_SET_DEVICE_ATTR:
 		return kvm_device_ioctl_attr(dev, dev->ops->set_attr, arg);
 	case KVM_GET_DEVICE_ATTR:
@@ -2996,10 +2984,6 @@ static long kvm_vm_ioctl(struct file *filp,
 	if (kvm->mm != current->mm)
 		return -EIO;
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE 5.4");
-		r=0;
-		break;
 	case KVM_CREATE_VCPU:
 		r = kvm_vm_ioctl_create_vcpu(kvm, arg);
 		break;
@@ -3175,10 +3159,6 @@ static long kvm_vm_compat_ioctl(struct file *filp,
 	if (kvm->mm != current->mm)
 		return -EIO;
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE 5.5");
-		r=0;
-		break;
 	case KVM_GET_DIRTY_LOG: {
 		struct compat_kvm_dirty_log compat_log;
 		struct kvm_dirty_log log;
@@ -3257,10 +3237,6 @@ static long kvm_dev_ioctl(struct file *filp,
 	long r = -EINVAL;
 
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE 5.6");
-		r=0;
-		break;
 	case KVM_GET_API_VERSION:
 		if (arg)
 			goto out;
