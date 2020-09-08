@@ -3231,12 +3231,46 @@ static int kvm_dev_ioctl_create_vm(unsigned long type)
 	return r;
 }
 
+//on manipule les pages ici
+
+
+//void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act);
+void kvm_apply_policy(struct kvm_page_pol act);
+void kvm_apply_policy(struct kvm_page_pol act){	
+	
+	printk(KERN_INFO "NOUS SOMMES DANS NOTRE FONCTION\n");
+	
+	int gpn = act.gpn;
+	char pol = act.pol;
+	printk(KERN_INFO "Hors du if : La page (%lu) et la politique (%c)...\n", gpn, pol);
+
+
+}
+
 static long kvm_dev_ioctl(struct file *filp,
 			  unsigned int ioctl, unsigned long arg)
 {
 	long r = -EINVAL;
-
+	//int i=0;
 	switch (ioctl) {
+	case KVM_PAGE_POLICY:
+		//i=i+1;
+		printk(KERN_INFO "ON EST ENTRE");
+		struct kvm_page_pol __user *user_page_pol = arg;
+		struct kvm_page_pol act;
+	
+		//r=-EFAULT;
+		//on copie les données du l'userspace vers le kernel
+		if (copy_from_user(&act, user_page_pol, sizeof(act)))
+			goto out;
+		
+		//printk(KERN_INFO "[%u] : Avant la fonction : La page (%lu) et la politique (%c)...\n", i, act.gpn, act.pol);
+		printk(KERN_INFO " Avant la fonction : La page (%lu) et la politique (%c)...\n", act.gpn, act.pol);
+
+		//on écrit la politique dans la page
+		kvm_apply_policy(act);
+		//r = 0;
+		break;
 	case KVM_GET_API_VERSION:
 		if (arg)
 			goto out;

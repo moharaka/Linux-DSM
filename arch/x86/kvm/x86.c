@@ -3947,26 +3947,7 @@ split_irqchip_unlock:
 	}
 	return r;
 }
-//on écrit sur les pages
 
-//int kvm_apply_policy(struct kvm *kvm,unsigned long arg);
-void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act);
-void kvm_apply_policy(struct kvm *kvm,struct kvm_page_pol act){	
-	
-	printk(KERN_INFO "NOUS SOMMES DANS LA FONCTION\n");
-
-	
-
-	/*if(ioctl(fd, KVM_PAGE_POLICY,act)==-1){
-		printk(KERN_ERR "erreur sur l'ioctl\n");
-}	else{
-		int gpn = act->gpn;
-		char pol = act->pol;
-		printk(KERN_INFO "La page (%lu) et la politique (%c)...\n", gpn, pol);*/	
-	
-//	return arg;
-}
-//
 
 long kvm_arch_vm_ioctl(struct file *filp,
 		       unsigned int ioctl, unsigned long arg)
@@ -3984,30 +3965,9 @@ long kvm_arch_vm_ioctl(struct file *filp,
 		struct kvm_pit_state2 ps2;
 		struct kvm_pit_config pit_config;
 	} u;
-//à enlever
-	printk(KERN_INFO "ON EST DEHORS (%u)", KVM_PAGE_POLICY);
-	struct kvm_page_pol __user *user_page_pol = argp;
-	struct kvm_page_pol act;
-	printk(KERN_INFO "La page (%lu) et la politique (%c)...\n", act.gpn, act.pol);
-	switch (ioctl) {
-//jusqu'ici
-	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE");
-		struct kvm_page_pol __user *user_page_pol = argp;
-		struct kvm_page_pol act;
-	
-		r=-EFAULT;
-		//on copie les données du l'userspace vers le kernel
-		if (copy_from_user(&act, user_page_pol, sizeof(act)))
-			goto out;
-		
-		printk(KERN_INFO "La page (%lu) et la politique (%c)...\n", act.gpn, act.pol);
 
-		//on écrit la politique dans la page
-		kvm_apply_policy(kvm,act);
-		r = 0;
-		break;
-//
+	switch (ioctl) {
+
 	case KVM_SET_TSS_ADDR:
 		r = kvm_vm_ioctl_set_tss_addr(kvm, arg);
 		break;
