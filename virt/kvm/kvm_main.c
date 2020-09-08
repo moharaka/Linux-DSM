@@ -2540,10 +2540,7 @@ static long kvm_vcpu_ioctl(struct file *filp,
 	int r;
 	struct kvm_fpu *fpu = NULL;
 	struct kvm_sregs *kvm_sregs = NULL;
-	//
-	printk(KERN_INFO, "AU CAS OU : [%u],[%u]\n", KVM_PAGE_POLICY,ioctl);
 
-//
 	if (vcpu->kvm->mm != current->mm)
 		return -EIO;
 
@@ -2565,7 +2562,6 @@ static long kvm_vcpu_ioctl(struct file *filp,
 		return r;
 	switch (ioctl) {
 	case KVM_RUN:
-		printk(KERN_INFO, "on a KVM_RUN \n");
 		r = -EINVAL;
 		if (arg)
 			goto out;
@@ -2583,7 +2579,7 @@ static long kvm_vcpu_ioctl(struct file *filp,
 		trace_kvm_userspace_exit(vcpu->run->exit_reason, r);
 		break;
 	case KVM_GET_REGS: {
-		printk(KERN_INFO, "on a KVM_GET_REGS \n");
+		
 		struct kvm_regs *kvm_regs;
 
 		r = -ENOMEM;
@@ -2602,7 +2598,7 @@ out_free1:
 		break;
 	}
 	case KVM_SET_REGS: {
-		printk(KERN_INFO, "on a KVM_SET_REGS \n");
+		
 		struct kvm_regs *kvm_regs;
 
 		r = -ENOMEM;
@@ -2616,7 +2612,7 @@ out_free1:
 		break;
 	}
 	case KVM_GET_SREGS: {
-		printk(KERN_INFO, "on a KVM_GET_SREGS \n");
+		
 		kvm_sregs = kzalloc(sizeof(struct kvm_sregs), GFP_KERNEL);
 		r = -ENOMEM;
 		if (!kvm_sregs)
@@ -2631,7 +2627,7 @@ out_free1:
 		break;
 	}
 	case KVM_SET_SREGS: {
-		printk(KERN_INFO, "on a KVM_SET_SREGS \n");
+		
 		kvm_sregs = memdup_user(argp, sizeof(*kvm_sregs));
 		if (IS_ERR(kvm_sregs)) {
 			r = PTR_ERR(kvm_sregs);
@@ -2642,7 +2638,7 @@ out_free1:
 		break;
 	}
 	case KVM_GET_MP_STATE: {
-		printk(KERN_INFO, "on a KVM_GET_MP_STATE \n");
+		
 		struct kvm_mp_state mp_state;
 
 		r = kvm_arch_vcpu_ioctl_get_mpstate(vcpu, &mp_state);
@@ -2655,7 +2651,7 @@ out_free1:
 		break;
 	}
 	case KVM_SET_MP_STATE: {
-		printk(KERN_INFO, "on a KVM_SET_MP_STATE \n");
+		
 		struct kvm_mp_state mp_state;
 
 		r = -EFAULT;
@@ -2665,7 +2661,7 @@ out_free1:
 		break;
 	}
 	case KVM_TRANSLATE: {
-		printk(KERN_INFO, "on a KVM_TRANSLATE \n");
+		
 		struct kvm_translation tr;
 
 		r = -EFAULT;
@@ -2681,7 +2677,7 @@ out_free1:
 		break;
 	}
 	case KVM_SET_GUEST_DEBUG: {
-		printk(KERN_INFO, "on a KVM_SET_GUEST_DEBUG \n");
+		
 		struct kvm_guest_debug dbg;
 
 		r = -EFAULT;
@@ -2691,7 +2687,7 @@ out_free1:
 		break;
 	}
 	case KVM_SET_SIGNAL_MASK: {
-		printk(KERN_INFO, "on a KVM_SET_SIGNAL_MASK \n");
+		
 		struct kvm_signal_mask __user *sigmask_arg = argp;
 		struct kvm_signal_mask kvm_sigmask;
 		sigset_t sigset, *p;
@@ -2715,7 +2711,7 @@ out_free1:
 		break;
 	}
 	case KVM_GET_FPU: {
-		printk(KERN_INFO, "on a KVM_GET_FPU \n");
+		
 		fpu = kzalloc(sizeof(struct kvm_fpu), GFP_KERNEL);
 		r = -ENOMEM;
 		if (!fpu)
@@ -2730,7 +2726,7 @@ out_free1:
 		break;
 	}
 	case KVM_SET_FPU: {
-		printk(KERN_INFO, "on a KVM_SET_FPU \n");
+		
 		fpu = memdup_user(argp, sizeof(*fpu));
 		if (IS_ERR(fpu)) {
 			r = PTR_ERR(fpu);
@@ -2738,10 +2734,6 @@ out_free1:
 			goto out;
 		}
 		r = kvm_arch_vcpu_ioctl_set_fpu(vcpu, fpu);
-		break;
-	}
-	case KVM_PAGE_POLICY:{
-		printk(KERN_INFO, "RECEPTION DE L'IOCTL : [%u]\n", KVM_PAGE_POLICY);
 		break;
 	}
 	default:
@@ -3235,7 +3227,7 @@ static int kvm_dev_ioctl_create_vm(unsigned long type)
 
 
 //void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act);
-void kvm_apply_policy(struct kvm_page_pol act);
+/*void kvm_apply_policy(struct kvm_page_pol act);
 void kvm_apply_policy(struct kvm_page_pol act){	
 	
 	printk(KERN_INFO "NOUS SOMMES DANS NOTRE FONCTION\n");
@@ -3244,8 +3236,7 @@ void kvm_apply_policy(struct kvm_page_pol act){
 	char pol = act.pol;
 	printk(KERN_INFO "Hors du if : La page (%lu) et la politique (%c)...\n", gpn, pol);
 
-
-}
+}*/
 
 static long kvm_dev_ioctl(struct file *filp,
 			  unsigned int ioctl, unsigned long arg)
@@ -3253,24 +3244,22 @@ static long kvm_dev_ioctl(struct file *filp,
 	long r = -EINVAL;
 	//int i=0;
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:
+	/*case KVM_PAGE_POLICY:
 		//i=i+1;
 		printk(KERN_INFO "ON EST ENTRE");
 		struct kvm_page_pol __user *user_page_pol = arg;
 		struct kvm_page_pol act;
 	
-		//r=-EFAULT;
 		//on copie les données du l'userspace vers le kernel
 		if (copy_from_user(&act, user_page_pol, sizeof(act)))
 			goto out;
 		
-		//printk(KERN_INFO "[%u] : Avant la fonction : La page (%lu) et la politique (%c)...\n", i, act.gpn, act.pol);
-		printk(KERN_INFO " Avant la fonction : La page (%lu) et la politique (%c)...\n", act.gpn, act.pol);
+		//printk(KERN_INFO " Avant la fonction : La page (%lu) et la politique (%c)...\n", act.gpn, act.pol);
 
 		//on écrit la politique dans la page
 		kvm_apply_policy(act);
-		//r = 0;
-		break;
+		r = 0;
+		break;*/
 	case KVM_GET_API_VERSION:
 		if (arg)
 			goto out;
