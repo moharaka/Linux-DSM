@@ -6192,12 +6192,11 @@ int kvm_emulate_hypercall(struct kvm_vcpu *vcpu)
 	case KVM_HC_ATOMIC_INC:
 		/*
 			a0 gpa of jiffies
-			a1 gva of jiffies
-			a2 var size
-			a3 jiffies value		
+			a1 var size
+			a2 jiffies value		
 		*/
-		printk(KERN_INFO "data captured in hypercall KVM_HC_ATOMIC_INC \ngpa : %llu \ngva : %lu\nvar size : %dvar_value : %lu",a0,a1,a2,a3);
-		ret = send_upd_request(vcpu->kvm, a0, a1, a2,a3);
+		printk(KERN_INFO "data captured in hypercall KVM_HC_ATOMIC_INC \ngpa : %llu\nvar size : %dvar_value : %lu",a0,a1,a2,a3);
+		ret = send_upd_request(vcpu->kvm, a0, a1, a2);
 		break;
 	default:
 		ret = -KVM_ENOSYS;

@@ -70,7 +70,7 @@ struct dsm_request {
 	uint16_t version;
 	long size;
 	long var_data; //the variable which is used for updating;
-	unsigned long gva;
+	unsigned long gpa;
 };
 
 struct dsm_response {
@@ -163,7 +163,7 @@ done:
  * the arguments are in that order from var_gpa : the variable gpa, the variable gva, the var size, and the data, which shall be written.
  * result : 0 if everything went well, and a negative number if not
  */
-int send_upd_request(struct kvm *kvm, phys_addr_t var_gpa,unsigned long var_gva, long var_size,long var_datas){
+int send_upd_request(struct kvm *kvm, phys_addr_t var_gpa, long var_size,long var_datas){
 	int dest_id; //dest id
 	int ret = 0; //return value
 	char r = 1;
@@ -179,7 +179,7 @@ int send_upd_request(struct kvm *kvm, phys_addr_t var_gpa,unsigned long var_gva,
 			.is_smm = true,
 			.gfn = gpa_to_gfn(var_gpa),
 			.size = var_size,
-			.gva = var_gpa,
+			.gpa = var_gpa,
 			.var_data = var_datas
 		};
 		if (kvm->arch.dsm_id == dest_id)
@@ -295,9 +295,9 @@ static int dsm_handle_send_upd_req(struct kvm *kvm, kconnection_t *conn_sock,
 //TODO RECUPERER LES PARAMS, TRANSFORMER LA GPA EN HVA, SOIT VFN, PROTEGER LA PAGE EN LECTURE, ECRIRE SUR LA PAGE ET FAIRE LE FEEDBACK
 printk(KERN_INFO "in handle send upd : here is the request type and gfn : %s",req_desc[req->req_type]);
 printk(KERN_INFO "requete update capturée");
-printk(KERN_WARNING "kvm[%d] a recu une requête  req_type[%s] gfn-vfn[%llu,%llu], the gva is : %lu the size is %ld and the data for update is %ld",kvm->arch.dsm_id, req_desc[req->req_type],req->gfn,vfn,req->gva, req->size,req->var_data);
+printk(KERN_WARNING "kvm[%d] a recu une requête  req_type[%s] gfn-vfn[%llu,%llu], the gva is : %lu the size is %ld and the data for update is %ld",kvm->arch.dsm_id, req_desc[req->req_type],req->gfn,vfn,req->gpa, req->size,req->var_data);
 	//TODO recuperer l'offset mettre à la place de zero et régler le problème de -14
-	int result_write = kvm_write_guest_page_nonlocal(kvm,memslot,req->gfn,req->var_data,0,  req->size);
+	int result_write = kvm_write_guest_page_nonlocal(kvm,memslot,req->gfn,&(req->var_data),(req->gpa % PAGE_SIZE),  req->size);
 	printk(KERN_INFO "%s function : there is the result of writing %d",__func__,result_write);
 	if(result_write  < 0){
 		printk(KERN_INFO "%s function : DSM writing guest page non local failed",__func__);
