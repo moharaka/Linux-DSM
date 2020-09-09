@@ -60,6 +60,9 @@
 #include "async_pf.h"
 #include "vfio.h"
 
+//
+#include "../../arch/x86/kvm/dsm-util.h"
+//
 #define CREATE_TRACE_POINTS
 #include <trace/events/kvm.h>
 
@@ -2561,9 +2564,6 @@ static long kvm_vcpu_ioctl(struct file *filp,
 	if (r)
 		return r;
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE vcpu");
-		break;
 	case KVM_RUN:
 		r = -EINVAL;
 		if (arg)
@@ -2761,9 +2761,6 @@ static long kvm_vcpu_compat_ioctl(struct file *filp,
 		return -EIO;
 
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE vcpu compact");
-		break;
 	case KVM_SET_SIGNAL_MASK: {
 		struct kvm_signal_mask __user *sigmask_arg = argp;
 		struct kvm_signal_mask kvm_sigmask;
@@ -2819,9 +2816,6 @@ static long kvm_device_ioctl(struct file *filp, unsigned int ioctl,
 	struct kvm_device *dev = filp->private_data;
 
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE device");
-		break;
 	case KVM_SET_DEVICE_ATTR:
 		return kvm_device_ioctl_attr(dev, dev->ops->set_attr, arg);
 	case KVM_GET_DEVICE_ATTR:
@@ -2975,6 +2969,35 @@ static long kvm_vm_ioctl_check_extension_generic(struct kvm *kvm, long arg)
 	return kvm_vm_ioctl_check_extension(kvm, arg);
 }
 
+
+//on manipule les pages ici
+
+
+void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act);
+void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act){	
+	
+	printk(KERN_INFO "NOUS SOMMES DANS NOTRE FONCTION\n");
+	
+	int gpn = act.gpn;
+	char pol = act.pol;
+	printk(KERN_INFO "Hors du if : La page (%lu) et la politique (%c)...\n", gpn, pol);
+	
+	struct kvm_dsm_info *info;
+	struct kvm_dsm_memory_slot *slot;
+	struct kvm_dsm_memslots *slots;
+	int k,j;
+
+	slots=__kvm_hvaslots(kvm);
+	for (j = 0; j < slots->used_slots; j++) {
+			slot = &slots->memslots[j];
+			for (k = 0; k < slot->npages; k++) {
+				info = &slot->vfn_dsm_state[k];
+				printk(KERN_INFO "info(%d) : state = [%u]\n", k, info->state);
+			}
+	}
+
+}
+
 static long kvm_vm_ioctl(struct file *filp,
 			   unsigned int ioctl, unsigned long arg)
 {
@@ -2986,7 +3009,17 @@ static long kvm_vm_ioctl(struct file *filp,
 		return -EIO;
 	switch (ioctl) {
 	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE vm");
+		//printk(KERN_INFO "ON EST ENTRE vm");
+		struct kvm_page_pol __user *user_page_pol = arg;
+		struct kvm_page_pol act;
+	
+		//on copie les données du l'userspace vers le kernel
+		if (copy_from_user(&act, user_page_pol, sizeof(act)))
+			goto out;
+		
+		//on écrit la politique dans la page
+		kvm_apply_policy(kvm,act);
+		r = 0;
 		break;
 	case KVM_CREATE_VCPU:
 		r = kvm_vm_ioctl_create_vcpu(kvm, arg);
@@ -3163,9 +3196,6 @@ static long kvm_vm_compat_ioctl(struct file *filp,
 	if (kvm->mm != current->mm)
 		return -EIO;
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:
-		printk(KERN_INFO "ON EST ENTRE vm compat");
-		break;
 	case KVM_GET_DIRTY_LOG: {
 		struct compat_kvm_dirty_log compat_log;
 		struct kvm_dirty_log log;
@@ -3238,20 +3268,6 @@ static int kvm_dev_ioctl_create_vm(unsigned long type)
 	return r;
 }
 
-//on manipule les pages ici
-
-
-//void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act);
-void kvm_apply_policy(struct kvm_page_pol act);
-void kvm_apply_policy(struct kvm_page_pol act){	
-	
-	printk(KERN_INFO "NOUS SOMMES DANS NOTRE FONCTION\n");
-	
-	int gpn = act.gpn;
-	char pol = act.pol;
-	printk(KERN_INFO "Hors du if : La page (%lu) et la politique (%c)...\n", gpn, pol);
-
-}
 
 static long kvm_dev_ioctl(struct file *filp,
 			  unsigned int ioctl, unsigned long arg)
@@ -3259,22 +3275,7 @@ static long kvm_dev_ioctl(struct file *filp,
 	long r = -EINVAL;
 
 	switch (ioctl) {
-//
-	case KVM_PAGE_POLICY:
-		
-		printk(KERN_INFO "ON EST ENTRE dans dev");
-		struct kvm_page_pol __user *user_page_pol = arg;
-		struct kvm_page_pol act;
-	
-		//on copie les données du l'userspace vers le kernel
-		if (copy_from_user(&act, user_page_pol, sizeof(act)))
-			goto out;
-		
-		//on écrit la politique dans la page
-		kvm_apply_policy(act);
-		r = 0;
-		break;
-//
+
 	case KVM_GET_API_VERSION:
 		if (arg)
 			goto out;
