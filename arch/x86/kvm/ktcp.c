@@ -37,7 +37,7 @@
 
 #define BLOCKED_HASH_BITS	7
 static DEFINE_HASHTABLE(ktcp_sema_hash, BLOCKED_HASH_BITS);
-static DEFINE_SPINLOCK(ktcp_sema_hash_lock);
+static DEFINE_MUTEX(ktcp_sema_hash_lock);
 
 struct ktcp_semaphore_s
 {
@@ -46,6 +46,7 @@ struct ktcp_semaphore_s
 	struct hlist_node hlink;
 };
 
+//create the sema and add it to the hash
 static struct semaphore* ktcp_sema_put(long sock)
 {
  	struct ktcp_semaphore_s *entry;
@@ -53,9 +54,7 @@ static struct semaphore* ktcp_sema_put(long sock)
 	entry->sock=sock;
 	sema_init(&entry->sema, 0);
 
-	spin_lock(&ktcp_sema_hash_lock);
 	hash_add(ktcp_sema_hash, &entry->hlink, sock);
-	spin_unlock(&ktcp_sema_hash_lock);
 
 	return &entry->sema;
 }
@@ -65,7 +64,6 @@ static struct semaphore* ktcp_sema_get(long sock)
 	int found=0;
 	struct ktcp_semaphore_s *entry=NULL;
 
-	spin_lock(&ktcp_sema_hash_lock);
 	hash_for_each_possible(ktcp_sema_hash, entry, hlink, (long) sock) {
 		if(sock==entry->sock)
 		{
@@ -73,7 +71,6 @@ static struct semaphore* ktcp_sema_get(long sock)
 			break;
 		}
 	}
-	spin_unlock(&ktcp_sema_hash_lock);
 
 	if(!found)
 		return NULL;
@@ -83,9 +80,11 @@ static struct semaphore* ktcp_sema_get(long sock)
 
 static struct semaphore* get_lock(long sock)
 {
+	mutex_lock(&ktcp_sema_hash_lock);
 	struct semaphore *sema=ktcp_sema_get((long)sock);
 	if(!sema)
 		sema=ktcp_sema_put((long)sock);
+	mutex_unlock(&ktcp_sema_hash_lock);
 	return sema;
 }
 

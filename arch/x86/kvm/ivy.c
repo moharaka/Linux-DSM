@@ -150,6 +150,48 @@ done:
 	return ret;
 }
 
+static int kvm_dsm_forward(struct kvm *kvm, uint16_t dest_id, 
+		const struct dsm_request *req, tx_add_t *tx_add)
+{
+	kconnection_t **conn_sock;
+	bool from_server=false;
+	int ret;
+
+	if (kvm->arch.dsm_stopped)
+		return -EINVAL;
+
+	//conn_sock=get_socket(kvm, from_server, dest_id); TODO merge code
+	if (!from_server)
+		conn_sock = &kvm->arch.dsm_conn_socks[dest_id];
+	else {
+		conn_sock = &kvm->arch.dsm_conn_socks[DSM_MAX_INSTANCES + dest_id];
+	}
+
+	/*
+	 * Mutiple vCPUs/servers may connect to a remote node simultaneously.
+	 */
+	if (*conn_sock == NULL) {
+		mutex_lock(&kvm->arch.conn_init_lock);
+		if (*conn_sock == NULL) {
+			ret = kvm_dsm_connect(kvm, dest_id, conn_sock);
+			if (ret < 0) {
+				mutex_unlock(&kvm->arch.conn_init_lock);
+				return ret;
+			}
+		}
+		mutex_unlock(&kvm->arch.conn_init_lock);
+	}
+
+	dsm_debug_v("kvm[%d] sent request[0x%x] to kvm[%d] req_type[%s] gfn[%llu,%d]",
+			kvm->arch.dsm_id, tx_add->txid, dest_id, req_desc[req->req_type],
+			req->gfn, req->is_smm);
+
+	ret = network_ops.send(*conn_sock, (const char *)req, sizeof(struct
+				dsm_request), 0, tx_add);
+
+	return ret;
+}
+
 /*
  * kvm_dsm_invalidate - issued by owner of a page to invalidate all of its copies
  * @cpyset: given copyset. NULL means using its own copyset.
@@ -283,27 +325,15 @@ static int dsm_handle_write_req(struct kvm *kvm, kconnection_t *conn_sock,
 		dsm_change_state(slot, vfn, DSM_INVALID);
 	}
 	else {
-		struct dsm_request new_req = {
-			.req_type = DSM_REQ_WRITE,
-			.requester = kvm->arch.dsm_id,
-			.msg_sender = req->msg_sender,
-			.gfn = req->gfn,
-			.is_smm = req->is_smm,
-			.version = req->version,
-		};
 		owner = dsm_get_prob_owner(slot, vfn);
-		ret = length = kvm_dsm_fetch(kvm, owner, true, &new_req, page, &resp);
+		dsm_debug_v("kvm[%d] forward request of gfn[%llu,%d] "
+				"from kvm[%d] to kvm[%d]\n", kvm->arch.dsm_id, req->gfn,
+				req->is_smm, req->msg_sender, owner);
+		ret = kvm_dsm_forward(kvm, owner, req, tx_add);
 		if (ret < 0)
 			return ret;
-
-		dsm_change_state(slot, vfn, DSM_INVALID);
-		kvm_dsm_apply_access_right(kvm, slot, vfn, DSM_INVALID);
 		dsm_set_prob_owner(slot, vfn, req->msg_sender);
-		dsm_debug_v("kvm[%d](M3) changed owner of gfn[%llu,%d] "
-				"from kvm[%d] to kvm[%d]\n", kvm->arch.dsm_id, req->gfn,
-				req->is_smm, owner, req->msg_sender);
-
-		clear_bit(kvm->arch.dsm_id, &resp.inv_copyset);
+		goto out;
 	}
 
 	if (is_owner) {
@@ -319,6 +349,7 @@ static int dsm_handle_write_req(struct kvm *kvm, kconnection_t *conn_sock,
 	dsm_debug_v("kvm[%d] sent page[%llu,%d] to kvm[%d] length %d hash: 0x%x\n",
 			kvm->arch.dsm_id, req->gfn, req->is_smm, req->requester, length,
 			jhash(page, length, JHASH_INITVAL));
+out:
 	return 0;
 }
 
@@ -392,25 +423,15 @@ static int dsm_handle_read_req(struct kvm *kvm, kconnection_t *conn_sock,
 		resp.version = dsm_get_version(slot, vfn);
 	}
 	else {
-		struct dsm_request new_req = {
-			.req_type = DSM_REQ_READ,
-			.requester = kvm->arch.dsm_id,
-			.msg_sender = req->msg_sender,
-			.gfn = req->gfn,
-			.is_smm = req->is_smm,
-			.version = req->version,
-		};
 		owner = dsm_get_prob_owner(slot, vfn);
-		ret = length = kvm_dsm_fetch(kvm, owner, true, &new_req, page, &resp);
-		if (ret < 0)
-			goto out;
-		BUG_ON(dsm_is_readable(slot, vfn) && !(test_bit(kvm->arch.dsm_id,
-						&resp.inv_copyset)));
-		/* Even read fault changes owner now. May the force be with you. */
-		dsm_set_prob_owner(slot, vfn, req->msg_sender);
-		dsm_debug_v("kvm[%d](S3) changed owner of gfn[%llu,%d] vfn[%llu] "
+		dsm_debug_v("kvm[%d] forward request of gfn[%llu,%d] "
 				"from kvm[%d] to kvm[%d]\n", kvm->arch.dsm_id, req->gfn,
-				req->is_smm, vfn, owner, req->msg_sender);
+				req->is_smm, req->msg_sender, owner);
+		ret = kvm_dsm_forward(kvm, owner, req, tx_add);
+		if (ret < 0)
+			return ret;
+		dsm_set_prob_owner(slot, vfn, req->msg_sender);
+		goto out;
 	}
 
 	if (is_owner) {

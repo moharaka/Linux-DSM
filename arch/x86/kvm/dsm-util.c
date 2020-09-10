@@ -112,7 +112,8 @@ int insert_hvaslot(struct kvm_dsm_memslots *slots, int pos, hfn_t start,
 
 void dsm_lock(struct kvm *kvm, struct kvm_dsm_memory_slot *slot, hfn_t vfn)
 {
-#ifdef KVM_DSM_DEBUG
+//#ifdef KVM_DSM_DEBUG
+#if 0 // KVM_DSM_DEBUG
 	char cur_comm[TASK_COMM_LEN];
 	int retry_cnt = 0;
 
