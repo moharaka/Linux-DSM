@@ -1078,6 +1078,8 @@ int __kvm_set_memory_region(struct kvm *kvm,
 		return r;
 	}
 
+	printk(KERN_INFO "MAIN 1- slots->used_slots = [%d]\n", slots->used_slots);
+
 	return 0;
 
 out_slots:
@@ -2987,7 +2989,8 @@ void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act){
 	struct kvm_dsm_memslots *slots;
 	int k,j;
 
-	slots=__kvm_hvaslots(kvm);
+//	slots=__kvm_hvaslots(kvm);
+	slots = kvm->arch.dsm_hvaslots;
 	printk(KERN_INFO "1- slots->used_slots = [%d]\n", slots->used_slots);
 	for (j = 0; j < slots->used_slots; j++) {
 			slot = &slots->memslots[j];
@@ -3010,19 +3013,22 @@ static long kvm_vm_ioctl(struct file *filp,
 	if (kvm->mm != current->mm)
 		return -EIO;
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:
+	case KVM_PAGE_POLICY:{
 		//printk(KERN_INFO "ON EST ENTRE vm");
 		//struct kvm_page_pol __user *user_page_pol = arg;
-		struct kvm_page_pol *act = malloc(sizeof(struct kvm_page_pol));
-	
+		//struct kvm_page_pol *act = malloc(sizeof(struct kvm_page_pol));
+		struct kvm_page_pol act;
+
 		//on copie les données du l'userspace vers le kernel
-		if (copy_from_user(act, argp , sizeof(act)))
+		if (copy_from_user(&act, argp , sizeof(act)))
 			goto out;
 		
 		//on écrit la politique dans la page
 		kvm_apply_policy(kvm,act);
 		r = 0;
 		break;
+}
+		
 	case KVM_CREATE_VCPU:
 		r = kvm_vm_ioctl_create_vcpu(kvm, arg);
 		break;
