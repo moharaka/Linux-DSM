@@ -383,10 +383,50 @@ struct dsm_profile_info {
 	unsigned long rip[KVM_DSM_PF_RIP_MAX];
 };
 
+//
+
+
+/*void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act){	
+	
+	//printk(KERN_INFO "NOUS SOMMES DANS NOTRE FONCTION\n");
+	
+	int gpn = act.gpn;
+	char pol = act.pol;
+	printk(KERN_INFO "dsm_util : La page (%lu) et la politique (%c)...\n", gpn, pol);
+	
+	struct kvm_dsm_info *info;
+	struct kvm_dsm_memory_slot *slot;
+	struct kvm_dsm_memslots *slots;
+	int k,j;
+
+	slots=__kvm_hvaslots(kvm);
+	//slots = kvm->arch.dsm_hvaslots;
+	//slots=Gslots;
+	printk(KERN_INFO "APPLY : slots->used_slots = [%d]\n", slots->used_slots);
+	for (j = 0; j < slots->used_slots; j++) {
+			slot = &slots->memslots[j];
+			printk(KERN_INFO " slot->npages = [%lu] et slot->base_vfn = (%lu)\n", slot->npages,slot->base_vfn);
+			for (k = 0; k < slot->npages; k++) {
+				info = &slot->vfn_dsm_state[k];
+				printk(KERN_INFO "*****");
+				printk(KERN_INFO "info(%d) : state = [%u]\n", k, info->state);
+				if (slot->base_vfn==gpn){
+					
+					info->policy = pol;
+				printk(KERN_INFO "*---*");
+}
+				printk(KERN_INFO "*****");
+			}
+	}
+
+}*/
+
+//
 /* Find the N pages with maximum read and write. */
 static void __kvm_dsm_report_profile(struct kvm *kvm, int clean)
 {
 	#define N 10
+	printk(KERN_INFO "ON EST DANS kvm_dsm_report_profile\n");
 	int idx;
 	unsigned long flags;
 	long unique_page=0;

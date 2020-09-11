@@ -866,6 +866,43 @@ out:
 	return ret;
 }
 
+void kvm_dsm_apply_policy(struct kvm *kvm, struct kvm_page_pol act);
+void kvm_dsm_apply_policy(struct kvm *kvm, struct kvm_page_pol act){	
+	
+	printk(KERN_INFO "NOUS SOMMES DANS NOTRE FONCTION\n");
+	
+	int gpn = act.gpn;
+	char pol = act.pol;
+	printk(KERN_INFO "ON A : La page (%lu) et la politique (%c)...\n", gpn, pol);
+	
+	struct kvm_dsm_info *info;
+	struct kvm_dsm_memory_slot *slot;
+	struct kvm_dsm_memslots *slots;
+	int k,j;
+
+	slots=__kvm_hvaslots(kvm);
+	//slots = kvm->arch.dsm_hvaslots;
+	//slots=Gslots;
+	printk(KERN_INFO "DSM : slots->used_slots = [%d]\n", slots->used_slots);
+	for (j = 0; j < slots->used_slots; j++) {
+			slot = &slots->memslots[j];
+			printk(KERN_INFO " slot->npages = [%lu] et slot->base_vfn = (%lu)\n", slot->npages,slot->base_vfn);
+			for (k = 0; k < slot->npages; k++) {
+				info = &slot->vfn_dsm_state[k];
+				printk(KERN_INFO "*****");
+				printk(KERN_INFO "info(%d) : state = [%u]\n", k, info->state);
+				if (slot->base_vfn==gpn){
+					
+					info->policy = pol;
+				printk(KERN_INFO "*---*");
+}
+				printk(KERN_INFO "*****");
+			}
+	}
+
+	
+}
+
 long kvm_vm_ioctl_dsm(struct kvm *kvm, unsigned ioctl,
 				  unsigned long arg)
 {
@@ -873,6 +910,19 @@ long kvm_vm_ioctl_dsm(struct kvm *kvm, unsigned ioctl,
 	int r;
 
 	switch (ioctl) {
+	case KVM_PAGE_POLICY:{
+		printk(KERN_INFO "kvm_vm_ioctl_dsm : ON EST ENTRE");
+		/*struct kvm_page_pol act;
+		
+		//on copie les données du l'userspace vers le kernel
+		if (copy_from_user(&act, argp , sizeof(act)))
+			goto out;
+		
+		//on écrit la politique dans la page
+		kvm_dsm_apply_policy(kvm,act);*/
+		r = 0;
+		break;
+}
 	case KVM_DSM_ENABLE: {
 		struct kvm_dsm_params params;
 		r = -EFAULT;

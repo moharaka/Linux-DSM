@@ -732,7 +732,7 @@ typedef struct tx_add {
 struct kvm_dsm_info {
 	unsigned state;
 	//notre variable de manipulation de la politique sur la page
-	int policy;
+	char policy;
 	//
 #ifdef IVY_KVM_DSM
 	DECLARE_BITMAP(copyset, DSM_MAX_INSTANCES);
