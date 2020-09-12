@@ -906,7 +906,7 @@ static struct kvm_memslots *install_new_memslots(struct kvm *kvm,
 
 //on manipule les pages ici
 
-
+/*
 void kvm_apply_policy1(struct kvm *kvm, struct kvm_page_pol act);
 void kvm_apply_policy1(struct kvm *kvm, struct kvm_page_pol act){	
 	
@@ -939,9 +939,9 @@ void kvm_apply_policy1(struct kvm *kvm, struct kvm_page_pol act){
 }
 				printk(KERN_INFO "*****");
 			}
-	}*/
+	}
 
-}
+}*/
 
 /*
  * Allocate some memory and give it an address in the guest physical address
@@ -3198,8 +3198,8 @@ out_free_irq_routing:
 			goto out;
 		
 		//on écrit la politique dans la page
-		//kvm_apply_policy(kvm,act);
-		kvm_dsm_report_profile(kvm);
+		kvm_apply_policy(kvm,act);
+		//kvm_dsm_report_profile(kvm);
 		r = 0;
 		break;
 	}

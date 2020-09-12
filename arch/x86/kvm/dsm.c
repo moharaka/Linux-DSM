@@ -866,7 +866,7 @@ out:
 	return ret;
 }
 
-void kvm_dsm_apply_policy(struct kvm *kvm, struct kvm_page_pol act);
+/*void kvm_dsm_apply_policy(struct kvm *kvm, struct kvm_page_pol act);
 void kvm_dsm_apply_policy(struct kvm *kvm, struct kvm_page_pol act){	
 	
 	printk(KERN_INFO "NOUS SOMMES DANS NOTRE FONCTION\n");
@@ -901,7 +901,7 @@ void kvm_dsm_apply_policy(struct kvm *kvm, struct kvm_page_pol act){
 	}
 
 	
-}
+}*/
 
 long kvm_vm_ioctl_dsm(struct kvm *kvm, unsigned ioctl,
 				  unsigned long arg)
