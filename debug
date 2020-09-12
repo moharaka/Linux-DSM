@@ -8111,3 +8111,280 @@ make: *** [install] Erreur 2
 make: *** [install] Erreur 2
 make: *** [install] Fin de la connexion (raccroché)
 make: *** [install] Erreur 2
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol cast_s3
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol __cast5_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol cast5_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol cast_s2
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol __cast5_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol cast_s1
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol cast_s4
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol twofish_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-x86_64-3way.ko needs unknown symbol lrw_free_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-x86_64-3way.ko needs unknown symbol twofish_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-x86_64-3way.ko needs unknown symbol __twofish_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-x86_64-3way.ko needs unknown symbol lrw_init_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-x86_64-3way.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol __serpent_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol serpent_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol __serpent_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx2.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx2.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx2.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx2.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx2.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx2.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx2.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/poly1305-x86_64.ko needs unknown symbol crypto_poly1305_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/poly1305-x86_64.ko needs unknown symbol crypto_poly1305_setdesckey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/poly1305-x86_64.ko needs unknown symbol crypto_poly1305_final
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/poly1305-x86_64.ko needs unknown symbol crypto_poly1305_update
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/poly1305-x86_64.ko needs unknown symbol crypto_poly1305_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx-x86_64.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx-x86_64.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx-x86_64.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx-x86_64.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx-x86_64.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx-x86_64.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx-x86_64.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/chacha20-x86_64.ko needs unknown symbol crypto_chacha20_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/chacha20-x86_64.ko needs unknown symbol crypto_chacha20_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/chacha20-x86_64.ko needs unknown symbol crypto_chacha20_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/ghash-clmulni-intel.ko needs unknown symbol cryptd_free_ahash
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/ghash-clmulni-intel.ko needs unknown symbol cryptd_alloc_ahash
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/ghash-clmulni-intel.ko needs unknown symbol cryptd_ahash_child
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/ghash-clmulni-intel.ko needs unknown symbol cryptd_shash_desc
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/ghash-clmulni-intel.ko needs unknown symbol cryptd_ahash_queued
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol cryptd_alloc_aead
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol cryptd_aead_child
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol lrw_free_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol ablk_init_common
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol cryptd_aead_queued
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol lrw_init_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol cryptd_free_aead
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol lrw_free_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol __serpent_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol __serpent_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol lrw_init_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol serpent_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol __serpent_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/blowfish-x86_64.ko needs unknown symbol blowfish_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol lrw_free_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol __serpent_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol __serpent_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol lrw_init_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol serpent_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol __serpent_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-x86_64.ko needs unknown symbol twofish_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-x86_64.ko needs unknown symbol lrw_free_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-x86_64.ko needs unknown symbol lrw_init_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-x86_64.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol __cast6_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol cast_s3
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol cast6_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol lrw_free_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol __cast6_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol __cast6_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol cast_s2
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol lrw_init_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol cast_s1
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol cast_s4
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/des3_ede-x86_64.ko needs unknown symbol __des3_ede_setkey
+run-parts: executing /etc/kernel/postinst.d/apt-auto-removal 4.9.76+ /boot/vmlinuz-4.9.76+
+run-parts: executing /etc/kernel/postinst.d/initramfs-tools 4.9.76+ /boot/vmlinuz-4.9.76+
+update-initramfs: Generating /boot/initrd.img-4.9.76+
+run-parts: executing /etc/kernel/postinst.d/pm-utils 4.9.76+ /boot/vmlinuz-4.9.76+
+run-parts: executing /etc/kernel/postinst.d/unattended-upgrades 4.9.76+ /boot/vmlinuz-4.9.76+
+run-parts: executing /etc/kernel/postinst.d/update-notifier 4.9.76+ /boot/vmlinuz-4.9.76+
+run-parts: executing /etc/kernel/postinst.d/zz-update-grub 4.9.76+ /boot/vmlinuz-4.9.76+
+Création du fichier de configuration GRUB…
+Image Linux trouvée : /boot/vmlinuz-4.15.0-45-generic
+Image mémoire initiale trouvée : /boot/initrd.img-4.15.0-45-generic
+Image Linux trouvée : /boot/vmlinuz-4.9.217
+Image mémoire initiale trouvée : /boot/initrd.img-4.9.217
+Image Linux trouvée : /boot/vmlinuz-4.9.217.old
+Image mémoire initiale trouvée : /boot/initrd.img-4.9.217
+Image Linux trouvée : /boot/vmlinuz-4.9.76+
+Image mémoire initiale trouvée : /boot/initrd.img-4.9.76+
+Image Linux trouvée : /boot/vmlinuz-4.9.76+.old
+Image mémoire initiale trouvée : /boot/initrd.img-4.9.76+
+Adding boot menu entry for EFI firmware configuration
+fait
+./compile.sh: ligne 16 : [: « ] » manquant
+./compile.sh: ligne 24 : [: « ] » manquant
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol cast_s3
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol __cast5_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol cast5_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol cast_s2
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol __cast5_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol cast_s1
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast5-avx-x86_64.ko needs unknown symbol cast_s4
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol twofish_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-avx-x86_64.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-x86_64-3way.ko needs unknown symbol lrw_free_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-x86_64-3way.ko needs unknown symbol twofish_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-x86_64-3way.ko needs unknown symbol __twofish_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-x86_64-3way.ko needs unknown symbol lrw_init_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-x86_64-3way.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol __serpent_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol serpent_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol __serpent_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx2.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx2.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx2.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx2.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx2.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx2.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx2.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx2.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/poly1305-x86_64.ko needs unknown symbol crypto_poly1305_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/poly1305-x86_64.ko needs unknown symbol crypto_poly1305_setdesckey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/poly1305-x86_64.ko needs unknown symbol crypto_poly1305_final
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/poly1305-x86_64.ko needs unknown symbol crypto_poly1305_update
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/poly1305-x86_64.ko needs unknown symbol crypto_poly1305_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx-x86_64.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx-x86_64.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx-x86_64.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx-x86_64.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx-x86_64.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx-x86_64.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-aesni-avx-x86_64.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/chacha20-x86_64.ko needs unknown symbol crypto_chacha20_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/chacha20-x86_64.ko needs unknown symbol crypto_chacha20_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/chacha20-x86_64.ko needs unknown symbol crypto_chacha20_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/ghash-clmulni-intel.ko needs unknown symbol cryptd_free_ahash
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/ghash-clmulni-intel.ko needs unknown symbol cryptd_alloc_ahash
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/ghash-clmulni-intel.ko needs unknown symbol cryptd_ahash_child
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/ghash-clmulni-intel.ko needs unknown symbol cryptd_shash_desc
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/ghash-clmulni-intel.ko needs unknown symbol cryptd_ahash_queued
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol cryptd_alloc_aead
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol cryptd_aead_child
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol lrw_free_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol ablk_init_common
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol cryptd_aead_queued
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol lrw_init_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol cryptd_free_aead
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/aesni-intel.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol lrw_free_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol __serpent_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol __serpent_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol lrw_init_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol serpent_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol __serpent_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-avx-x86_64.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/blowfish-x86_64.ko needs unknown symbol blowfish_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol lrw_free_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol __serpent_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol __serpent_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol lrw_init_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol serpent_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol __serpent_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/serpent-sse2-x86_64.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/twofish-x86_64.ko needs unknown symbol twofish_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-x86_64.ko needs unknown symbol lrw_free_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-x86_64.ko needs unknown symbol lrw_init_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/camellia-x86_64.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol __cast6_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol ablk_decrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol cast_s3
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol cast6_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol lrw_free_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol ablk_set_key
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol ablk_init
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol ablk_exit
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol __cast6_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol __ablk_encrypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol __cast6_setkey
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol cast_s2
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol lrw_init_table
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol cast_s1
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol cast_s4
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/cast6-avx-x86_64.ko needs unknown symbol lrw_crypt
+depmod: WARNING: /lib/modules/4.9.76+/kernel/arch/x86/crypto/des3_ede-x86_64.ko needs unknown symbol __des3_ede_setkey
+run-parts: executing /etc/kernel/postinst.d/apt-auto-removal 4.9.76+ /boot/vmlinuz-4.9.76+
+run-parts: executing /etc/kernel/postinst.d/initramfs-tools 4.9.76+ /boot/vmlinuz-4.9.76+
+update-initramfs: Generating /boot/initrd.img-4.9.76+
+make[1]: *** [install] Fin de la connexion (raccroché)
+make: *** [install] Fin de la connexion (raccroché)

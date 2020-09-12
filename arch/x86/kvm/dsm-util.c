@@ -423,11 +423,6 @@ slot->base_vfn + k, &read_most[i].is_smm, NULL);
 			}
 		}
 	}
-	display_policy(read_most,pol_list, N);				
-}
-
-void display_policy(struct dsm_profile_info read_most[N],char *pol_list[N]){
-	
 	printk(KERN_INFO "***************");
 	printk(KERN_INFO "\tgfn\tpol\n");
 	for (i = 0; i < N; i++) {
@@ -436,9 +431,10 @@ void display_policy(struct dsm_profile_info read_most[N],char *pol_list[N]){
 		
 		printk(KERN_CONT "\n");
 	}
-	printk(KERN_INFO "***************");
-
+	printk(KERN_INFO "***************");			
 }
+
+
 
 //
 /* Find the N pages with maximum read and write. */
