@@ -60,9 +60,11 @@
 #include "async_pf.h"
 #include "vfio.h"
 
-//
+/*
+#include "../../arch/x86/kvm/dsm-util.c"*/
 #include "../../arch/x86/kvm/dsm-util.h"
-//
+
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/kvm.h>
 
@@ -2582,6 +2584,56 @@ static int kvm_vcpu_ioctl_set_sigmask(struct kvm_vcpu *vcpu, sigset_t *sigset)
 	return 0;
 }
 
+//on trouve pour un gpn donné la politique à appliquer
+
+void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act){	
+
+	#define N 10
+	printk(KERN_INFO "ON EST DANS kvm_apply_policy \n");
+	
+	struct kvm_dsm_memslots *slots;
+	struct kvm_dsm_memory_slot *slot;
+	struct kvm_dsm_info *info;
+
+	int i, j, k;
+	
+	long list_gpn[N];
+	char pol_list[N];
+
+	slots = __kvm_hvaslots(kvm);
+
+	//long gpn;
+
+	printk(KERN_INFO "A- slots->used_slots = [%d]\n", slots->used_slots);
+	for (i = 0; i < N; i++) {
+		for (j = 0; j < slots->used_slots; j++) {
+			slot = &slots->memslots[j];
+			printk(KERN_INFO "B- slot->npages = [%lu]\n", slot->npages);
+			for (k = 0; k < slot->npages; k++) {
+				info = &slot->vfn_dsm_state[k];
+				printk(KERN_INFO "info(%d) : state = [%u]\n", k, info->state);
+				list_gpn[i] = __kvm_dsm_vfn_to_gfn(slot, false,slot->base_vfn + k, 0, NULL);
+				pol_list[i] = 'x';
+				if (list_gpn[i] == act.gpn){
+					printk(KERN_INFO "match (%lu)",act.gpn);
+					info->policy = act.pol;
+					pol_list[i] = info->policy;
+				}
+			}
+		}
+	}
+	printk(KERN_INFO "***************");
+	printk(KERN_INFO "\tgfn\tpol\n");
+	for (i = 0; i < N; i++) {
+		printk(KERN_INFO "\t[%llu]; \t %c;",
+				list_gpn[i], pol_list[i]);
+		
+		printk(KERN_CONT "\n");
+	}
+	printk(KERN_INFO "***************");			
+}
+
+
 static long kvm_vcpu_ioctl(struct file *filp,
 			   unsigned int ioctl, unsigned long arg)
 {
@@ -2611,6 +2663,23 @@ static long kvm_vcpu_ioctl(struct file *filp,
 	if (r)
 		return r;
 	switch (ioctl) {
+	case KVM_PAGE_POLICY:{
+		//printk(KERN_INFO "ON EST ENTRE vm");
+		//struct kvm_page_pol __user *user_page_pol = arg;
+		//struct kvm_page_pol *act = malloc(sizeof(struct kvm_page_pol));
+		struct kvm_page_pol act;
+
+		//on copie les données du l'userspace vers le kernel
+		if (copy_from_user(&act, argp , sizeof(act)))
+			goto out;
+		
+		//on écrit la politique dans la page
+		kvm_apply_policy(vcpu->kvm,act);
+		//kvm_dsm_report_profile(kvm);
+		r = 0;
+		break;
+	}
+
 	case KVM_RUN:
 		r = -EINVAL;
 		if (arg)
@@ -3187,23 +3256,7 @@ out_free_irq_routing:
 /*
 #if flag_apply
 #endif*/
-	case KVM_PAGE_POLICY:{
-		//printk(KERN_INFO "ON EST ENTRE vm");
-		//struct kvm_page_pol __user *user_page_pol = arg;
-		//struct kvm_page_pol *act = malloc(sizeof(struct kvm_page_pol));
-		struct kvm_page_pol act;
-
-		//on copie les données du l'userspace vers le kernel
-		if (copy_from_user(&act, argp , sizeof(act)))
-			goto out;
-		
-		//on écrit la politique dans la page
-		kvm_apply_policy(kvm,act);
-		//kvm_dsm_report_profile(kvm);
-		r = 0;
-		break;
-	}
-
+	
 	default:
 		r = kvm_arch_vm_ioctl(filp, ioctl, arg);
 	}

@@ -385,54 +385,7 @@ struct dsm_profile_info {
 
 //
 
-//on trouve pour un gpn donné la politique à appliquer
 
-void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act){	
-
-	#define N 10
-	printk(KERN_INFO "ON EST DANS kvm_apply_policy \n");
-	
-	struct kvm_dsm_memslots *slots;
-	struct kvm_dsm_memory_slot *slot;
-	struct kvm_dsm_info *info;
-
-	int i, j, k;
-	
-	struct dsm_profile_info read_most[N];
-	char pol_list[N];
-
-	slots = __kvm_hvaslots(kvm);
-
-	long gpn;
-
-	printk(KERN_INFO "A- slots->used_slots = [%d]\n", slots->used_slots);
-	for (i = 0; i < N; i++) {
-		for (j = 0; j < slots->used_slots; j++) {
-			slot = &slots->memslots[j];
-			printk(KERN_INFO "B- slot->npages = [%lu]\n", slot->npages);
-			for (k = 0; k < slot->npages; k++) {
-				info = &slot->vfn_dsm_state[k];
-				printk(KERN_INFO "info(%d) : state = [%u]\n", k, info->state);
-				gpn = __kvm_dsm_vfn_to_gfn(slot, false,
-slot->base_vfn + k, &read_most[i].is_smm, NULL);
-				pol_list[i] = "^";
-				if (gpn == act.gpn){
-					info->policy = act.pol;
-					pol_list[i] = info->policy;
-				}
-			}
-		}
-	}
-	printk(KERN_INFO "***************");
-	printk(KERN_INFO "\tgfn\tpol\n");
-	for (i = 0; i < N; i++) {
-		printk(KERN_INFO "\t[%llu]; \t %c;",
-				read_most[i].gfn, pol_list[i]);
-		
-		printk(KERN_CONT "\n");
-	}
-	printk(KERN_INFO "***************");			
-}
 
 
 
