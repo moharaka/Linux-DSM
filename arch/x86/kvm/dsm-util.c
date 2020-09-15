@@ -394,7 +394,7 @@ struct dsm_profile_info {
 static void __kvm_dsm_report_profile(struct kvm *kvm, int clean)
 {
 	#define N 10
-	printk(KERN_INFO "ON EST DANS kvm_dsm_report_profile\n");
+	//printk(KERN_INFO "ON EST DANS kvm_dsm_report_profile\n");
 	int idx;
 	unsigned long flags;
 	long unique_page=0;
@@ -424,11 +424,11 @@ static void __kvm_dsm_report_profile(struct kvm *kvm, int clean)
 	/* TODO: Use priority queue */
 	idx = srcu_read_lock(&kvm->srcu);
 	slots = __kvm_hvaslots(kvm);
-	printk(KERN_INFO "01- slots->used_slots = [%d]\n", slots->used_slots);
+	//printk(KERN_INFO "01- slots->used_slots = [%d]\n", slots->used_slots);
 	for (i = 0; i < N; i++) {
 		for (j = 0; j < slots->used_slots; j++) {
 			slot = &slots->memslots[j];
-			printk(KERN_INFO "02- slot->npages = [%lu]\n", slot->npages);
+			//printk(KERN_INFO "02- slot->npages = [%lu]\n", slot->npages);
 			for (k = 0; k < slot->npages; k++) {
 				info = &slot->vfn_dsm_state[k];
 				if (info->read_pf > read_faults && (i == 0 ||

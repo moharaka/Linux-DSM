@@ -906,44 +906,7 @@ static struct kvm_memslots *install_new_memslots(struct kvm *kvm,
 }
 
 
-//on manipule les pages ici
 
-/*
-void kvm_apply_policy1(struct kvm *kvm, struct kvm_page_pol act);
-void kvm_apply_policy1(struct kvm *kvm, struct kvm_page_pol act){	
-	
-	//printk(KERN_INFO "NOUS SOMMES DANS NOTRE FONCTION\n");
-	
-	int gpn = act.gpn;
-	char pol = act.pol;
-	//printk(KERN_INFO "Hors du if : La page (%lu) et la politique (%c)...\n", gpn, pol);
-	
-	/*struct kvm_dsm_info *info;
-	struct kvm_dsm_memory_slot *slot;
-	struct kvm_dsm_memslots *slots;
-	int k,j;
-
-	slots=__kvm_hvaslots(kvm);
-	//slots = kvm->arch.dsm_hvaslots;
-	//slots=Gslots;
-	printk(KERN_INFO "APPLY : slots->used_slots = [%d]\n", slots->used_slots);
-	for (j = 0; j < slots->used_slots; j++) {
-			slot = &slots->memslots[j];
-			printk(KERN_INFO " slot->npages = [%lu] et slot->base_vfn = (%lu)\n", slot->npages,slot->base_vfn);
-			for (k = 0; k < slot->npages; k++) {
-				info = &slot->vfn_dsm_state[k];
-				printk(KERN_INFO "*****");
-				printk(KERN_INFO "info(%d) : state = [%u]\n", k, info->state);
-				if (slot->base_vfn==gpn){
-					
-					info->policy = pol;
-				printk(KERN_INFO "*---*");
-}
-				printk(KERN_INFO "*****");
-			}
-	}
-
-}*/
 
 /*
  * Allocate some memory and give it an address in the guest physical address
@@ -2586,7 +2549,7 @@ static int kvm_vcpu_ioctl_set_sigmask(struct kvm_vcpu *vcpu, sigset_t *sigset)
 
 //on trouve pour un gpn donné la politique à appliquer
 
-void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act){	
+/*void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act){	
 
 	#define N 10
 	printk(KERN_INFO "ON EST DANS kvm_apply_policy \n");
@@ -2631,7 +2594,7 @@ void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act){
 		printk(KERN_CONT "\n");
 	}
 	printk(KERN_INFO "***************");			
-}
+}*/
 
 
 static long kvm_vcpu_ioctl(struct file *filp,
@@ -2663,7 +2626,7 @@ static long kvm_vcpu_ioctl(struct file *filp,
 	if (r)
 		return r;
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:{
+	/*case KVM_PAGE_POLICY:{
 		//printk(KERN_INFO "ON EST ENTRE vm");
 		//struct kvm_page_pol __user *user_page_pol = arg;
 		//struct kvm_page_pol *act = malloc(sizeof(struct kvm_page_pol));
@@ -2678,7 +2641,7 @@ static long kvm_vcpu_ioctl(struct file *filp,
 		//kvm_dsm_report_profile(kvm);
 		r = 0;
 		break;
-	}
+	}*/
 
 	case KVM_RUN:
 		r = -EINVAL;
@@ -3098,7 +3061,17 @@ static long kvm_vm_ioctl(struct file *filp,
 	if (kvm->mm != current->mm)
 		return -EIO;
 	switch (ioctl) {
+	/*case KVM_PAGE_POLICY:{
+		struct kvm_page_pol act;
+
+		if (copy_from_user(&act, argp , sizeof(act)))
+			goto out;
 		
+		kvm_apply_policy(kvm,act);
+		//kvm_dsm_report_profile(kvm);
+		r = 0;
+		break;
+	}*/	
 	case KVM_CREATE_VCPU:
 		r = kvm_vm_ioctl_create_vcpu(kvm, arg);
 		break;
