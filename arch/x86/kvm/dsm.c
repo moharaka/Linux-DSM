@@ -878,7 +878,7 @@ void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act){
 	struct kvm_dsm_info *info;
 
 	int i, j, k;
-	
+	//TODO : arranger l'indexation de i a remplacer par k
 	long list_gpn[N];
 	char pol_list[N];
 
@@ -887,32 +887,26 @@ void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act){
 	//long gpn;
 
 	printk(KERN_INFO "A- slots->used_slots = [%d]\n", slots->used_slots);
-	for (i = 0; i < N; i++) {
-		for (j = 0; j < slots->used_slots; j++) {
-			slot = &slots->memslots[j];
-			printk(KERN_INFO "B- slot->npages = [%lu]\n", slot->npages);
-			for (k = 0; k < slot->npages; k++) {
-				info = &slot->vfn_dsm_state[k];
-				printk(KERN_INFO "info(%d) : state = [%u]\n", k, info->state);
-				list_gpn[i] = __kvm_dsm_vfn_to_gfn(slot, false,slot->base_vfn + k, 0, NULL);
-				pol_list[i] = 'x';
-				if (list_gpn[i] == act.gpn){
-					printk(KERN_INFO "match (%lu)",act.gpn);
-					info->policy = act.pol;
-					pol_list[i] = info->policy;
+	for (j = 0; j < slots->used_slots; j++) {
+		slot = &slots->memslots[j];
+		for (k = 0; k < slot->npages; k++) {
+			info = &slot->vfn_dsm_state[k];
+			list_gpn[i] = __kvm_dsm_vfn_to_gfn(slot, false,slot->base_vfn + k, 0, NULL);
+			pol_list[i] = 'x';
+				
+			if (list_gpn[i] == act.gpn){
+				printk(KERN_INFO "match (%lu)",act.gpn);
+				info->policy = act.pol;
+				pol_list[i] = info->policy;
+					
+				printk(KERN_INFO "\tgfn\tpol\n");
+				printk(KERN_INFO "\t[%llu]; \t %c;",list_gpn[i], pol_list[i]);
+				printk(KERN_INFO "***************");
+				break;
 				}
 			}
 		}
-	}
-	printk(KERN_INFO "***************");
-	printk(KERN_INFO "\tgfn\tpol\n");
-	for (i = 0; i < N; i++) {
-		printk(KERN_INFO "\t[%llu]; \t %c;",
-				list_gpn[i], pol_list[i]);
-		
-		printk(KERN_CONT "\n");
-	}
-	printk(KERN_INFO "***************");			
+				
 }
 //
 

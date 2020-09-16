@@ -2626,8 +2626,8 @@ static long kvm_vcpu_ioctl(struct file *filp,
 	if (r)
 		return r;
 	switch (ioctl) {
-	/*case KVM_PAGE_POLICY:{
-		//printk(KERN_INFO "ON EST ENTRE vm");
+	case KVM_PAGE_POLICY:{
+		printk(KERN_INFO "ON EST ENTRE kvm_vcpu_ioctl");
 		//struct kvm_page_pol __user *user_page_pol = arg;
 		//struct kvm_page_pol *act = malloc(sizeof(struct kvm_page_pol));
 		struct kvm_page_pol act;
@@ -2641,7 +2641,7 @@ static long kvm_vcpu_ioctl(struct file *filp,
 		//kvm_dsm_report_profile(kvm);
 		r = 0;
 		break;
-	}*/
+	}
 
 	case KVM_RUN:
 		r = -EINVAL;
