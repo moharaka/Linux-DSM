@@ -74,10 +74,6 @@
 MODULE_AUTHOR("Qumranet");
 MODULE_LICENSE("GPL");
 
-//
-//struct kvm_memslots *Gslots = kvm_kvzalloc(sizeof(struct kvm_memslots));
-//bool flag_apply = false;
-//
 /* Architectures should define their poll value according to the halt latency */
 static unsigned int halt_poll_ns = KVM_HALT_POLL_NS_DEFAULT;
 module_param(halt_poll_ns, uint, S_IRUGO | S_IWUSR);
@@ -2579,7 +2575,7 @@ static long kvm_vcpu_ioctl(struct file *filp,
 	if (r)
 		return r;
 	switch (ioctl) {
-	case KVM_PAGE_POLICY:{
+	/*case KVM_PAGE_POLICY:{
 		printk(KERN_INFO "ON EST ENTRE kvm_vcpu_ioctl");
 		//struct kvm_page_pol __user *user_page_pol = arg;
 		//struct kvm_page_pol *act = malloc(sizeof(struct kvm_page_pol));
@@ -2594,7 +2590,7 @@ static long kvm_vcpu_ioctl(struct file *filp,
 		//kvm_dsm_report_profile(kvm);
 		r = 0;
 		break;
-	}
+	}*/
 
 	case KVM_RUN:
 		r = -EINVAL;
@@ -3014,17 +3010,18 @@ static long kvm_vm_ioctl(struct file *filp,
 	if (kvm->mm != current->mm)
 		return -EIO;
 	switch (ioctl) {
-	/*case KVM_PAGE_POLICY:{
+
+	case KVM_PAGE_POLICY:{
 		struct kvm_page_pol act;
 
 		if (copy_from_user(&act, argp , sizeof(act)))
 			goto out;
 		
 		kvm_apply_policy(kvm,act);
-		//kvm_dsm_report_profile(kvm);
+		
 		r = 0;
 		break;
-	}*/	
+	}	
 	case KVM_CREATE_VCPU:
 		r = kvm_vm_ioctl_create_vcpu(kvm, arg);
 		break;
@@ -3037,9 +3034,6 @@ static long kvm_vm_ioctl(struct file *filp,
 			goto out;
 
 		r = kvm_vm_ioctl_set_memory_region(kvm, &kvm_userspace_mem);
-		//		
-		//flag_apply = true;
-		//
 		break;
 	}
 	case KVM_GET_DIRTY_LOG: {
@@ -3177,11 +3171,6 @@ out_free_irq_routing:
 	case KVM_CHECK_EXTENSION:
 		r = kvm_vm_ioctl_check_extension_generic(kvm, arg);
 		break;
-	
-//
-/*
-#if flag_apply
-#endif*/
 	
 	default:
 		r = kvm_arch_vm_ioctl(filp, ioctl, arg);
