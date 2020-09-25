@@ -866,53 +866,6 @@ out:
 	return ret;
 }
 
-//
-//void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act);
-void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act){	
-
-	#define N 10
-	//printk(KERN_INFO "ON EST DANS kvm_apply_policy \n");
-	
-	struct kvm_dsm_memslots *slots;
-	struct kvm_dsm_memory_slot *slot;
-	struct kvm_dsm_info *info;
-
-	int j, k;
-	//TODO : arranger l'indexation de i a remplacer par k
-	long list_gpn[N];
-	char pol_list[N];
-
-	slots = __kvm_hvaslots(kvm);
-	bool flag = false;
-	//long gpn;
-
-	printk(KERN_INFO "A- slots->used_slots = [%d]\n", slots->used_slots);
-	j = 0;k = 0;
-	while (!flag && j < slots->used_slots) {
-		slot = &slots->memslots[j];
-		while (k < slot->npages) {
-			info = &slot->vfn_dsm_state[k];
-			list_gpn[k] = __kvm_dsm_vfn_to_gfn(slot, false,slot->base_vfn + k, 0, NULL);
-//			pol_list[k] = 'x';
-				
-			if (list_gpn[k] == act.gpn){
-				printk(KERN_INFO "pour j = (%d) , match (%lu)",j,act.gpn);
-				info->policy = act.pol;
-				pol_list[k] = info->policy;
-					
-				printk(KERN_INFO "\tgfn\tpol\n");
-				printk(KERN_INFO "\t[%llu]; \t %c;",list_gpn[k], pol_list[k]);
-				printk(KERN_INFO "***************");
-				flag = true;
-				}
-			k = k + 1;
-			}
-		j = j + 1 ;
-		}
-				
-}
-//
-
 long kvm_vm_ioctl_dsm(struct kvm *kvm, unsigned ioctl,
 				  unsigned long arg)
 {
@@ -920,18 +873,7 @@ long kvm_vm_ioctl_dsm(struct kvm *kvm, unsigned ioctl,
 	int r;
 
 	switch (ioctl) {
-	/*case KVM_PAGE_POLICY:{
-		printk(KERN_INFO "kvm_vm_ioctl_dsm");
-		struct kvm_page_pol act;
-		r = -EFAULT;
-		if (copy_from_user(&act, argp , sizeof(act)))
-			goto out;
-		
-		kvm_apply_policy(kvm,act);
-		//kvm_dsm_report_profile(kvm);
-		r = 0;
-		break;
-	}*/
+
 	case KVM_DSM_ENABLE: {
 		struct kvm_dsm_params params;
 		r = -EFAULT;

@@ -2575,22 +2575,6 @@ static long kvm_vcpu_ioctl(struct file *filp,
 	if (r)
 		return r;
 	switch (ioctl) {
-	/*case KVM_PAGE_POLICY:{
-		printk(KERN_INFO "ON EST ENTRE kvm_vcpu_ioctl");
-		//struct kvm_page_pol __user *user_page_pol = arg;
-		//struct kvm_page_pol *act = malloc(sizeof(struct kvm_page_pol));
-		struct kvm_page_pol act;
-
-		//on copie les données du l'userspace vers le kernel
-		if (copy_from_user(&act, argp , sizeof(act)))
-			goto out;
-		
-		//on écrit la politique dans la page
-		kvm_apply_policy(vcpu->kvm,act);
-		//kvm_dsm_report_profile(kvm);
-		r = 0;
-		break;
-	}*/
 
 	case KVM_RUN:
 		r = -EINVAL;
@@ -2998,6 +2982,58 @@ static long kvm_vm_ioctl_check_extension_generic(struct kvm *kvm, long arg)
 }
 
 
+//
+void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol **act){	
+	
+	struct kvm_dsm_memslots *slots;
+	struct kvm_dsm_memory_slot *slot;
+	struct kvm_dsm_info *info;
+
+	int i, j, k, N;
+	
+	printk(KERN_INFO "AU Départ len = (%d) , gpn = [%lu] et politique = {%c}",(*act)->len, (*act)->gpn, (*act)->pol);
+	slots = __kvm_hvaslots(kvm);
+
+	printk(KERN_INFO "A- slots->used_slots = [%d]\n", slots->used_slots);
+	j = 0;k = 0;i = 0;
+
+	if (slots->used_slots != 0 && (*act)->len >0){
+		
+		while (i < (*act)->len){
+			bool flag = false;
+			printk(KERN_INFO "structure i = (%d) de gpn [%lu] et de politique {%c}",i,(*act+i)->gpn,(*act+i)->pol);
+			while (!flag && j < slots->used_slots) {
+				slot = &slots->memslots[j];
+				N = slot->npages;
+				long list_gpn[N];
+				while (k < N) {
+					info = &slot->vfn_dsm_state[k];
+		
+					list_gpn[k] = __kvm_dsm_vfn_to_gfn(slot, false,slot->base_vfn + k, 0, NULL);
+
+					if (list_gpn[k] == (*act+i)->gpn){
+						printk(KERN_INFO "pour le slot j = (%d) , match (%lu)",j,(*act+i)->gpn);
+						info->policy = (*act+i)->pol;
+				
+						printk(KERN_INFO "\tgfn\tpol\n");
+						printk(KERN_INFO "\t[%llu]; \t %c;",list_gpn[k], info->policy);
+						printk(KERN_INFO "***************");
+						flag = true;
+						}
+					k = k + 1;
+					}
+				j = j + 1 ;
+				}
+			i = i + 1;
+			}
+	
+	}
+	
+				
+}
+//
+
+
 static long kvm_vm_ioctl(struct file *filp,
 			   unsigned int ioctl, unsigned long arg)
 {
@@ -3012,12 +3048,14 @@ static long kvm_vm_ioctl(struct file *filp,
 	switch (ioctl) {
 
 	case KVM_PAGE_POLICY:{
-		struct kvm_page_pol act;
-
-		if (copy_from_user(&act, argp , sizeof(act)))
+		struct kvm_page_pol **act;
+		printk(KERN_INFO "kvm_vm_ioctl");
+		//act = kmalloc(sizeof(struct kvm_page_pol),GFP_USER);
+		if (copy_from_user(act, argp , sizeof(act)))
 			goto out;
+		//struct kvm_page_pol *app = kmalloc(sizeof(struct kvm_page_pol),GFP_USER);
 		
-		kvm_apply_policy(kvm,act);
+		kvm_apply_policy(kvm, act);
 		
 		r = 0;
 		break;

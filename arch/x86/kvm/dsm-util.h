@@ -370,7 +370,7 @@ static inline void dsm_unlock_fast_path(struct kvm_dsm_memory_slot *slot,
 }
 
 //
-void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol act);
+void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol **act);
 //
 #ifdef KVM_DSM_PF_PROFILE
 void kvm_dsm_pf_trace(struct kvm *kvm, struct kvm_dsm_memory_slot *slot,

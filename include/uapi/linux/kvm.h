@@ -1341,6 +1341,7 @@ struct kvm_assigned_pci_dev {
 struct kvm_page_pol{
 	long gpn; // GPN number
 	char pol; //policy needed to be applied
+	int len;
 };
 
 #define KVM_PAGE_POLICY _IOWR(KVMIO,0xf5, struct kvm_page_pol)
