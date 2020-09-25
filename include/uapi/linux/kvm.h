@@ -1344,7 +1344,7 @@ struct kvm_page_pol{
 	int len;
 };
 
-#define KVM_PAGE_POLICY _IOWR(KVMIO,0xf5, struct kvm_page_pol)
+#define KVM_PAGE_POLICY _IOWR(KVMIO,0xf5, struct kvm_page_pol *)
 
 //returns a positive number in good case and a negative number in case of failure
 //end

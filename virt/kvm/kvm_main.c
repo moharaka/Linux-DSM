@@ -2990,11 +2990,12 @@ void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol **act){
 	struct kvm_dsm_info *info;
 
 	int i, j, k, N;
-	
-	printk(KERN_INFO "AU Départ len = (%d) , gpn = [%lu] et politique = {%c}",(*act)->len, (*act)->gpn, (*act)->pol);
-	slots = __kvm_hvaslots(kvm);
+	printk(KERN_INFO "ON ENTRE DANS LA FONCTION");
 
+	slots = __kvm_hvaslots(kvm);
 	printk(KERN_INFO "A- slots->used_slots = [%d]\n", slots->used_slots);
+	printk(KERN_INFO "AU Départ len = (%d) , gpn = [%lu] et politique = {%c}",(*act)->len, (*act)->gpn, (*act)->pol);
+	
 	j = 0;k = 0;i = 0;
 
 	if (slots->used_slots != 0 && (*act)->len >0){
@@ -3026,10 +3027,7 @@ void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol **act){
 				}
 			i = i + 1;
 			}
-	
-	}
-	
-				
+	}				
 }
 //
 
@@ -3050,8 +3048,8 @@ static long kvm_vm_ioctl(struct file *filp,
 	case KVM_PAGE_POLICY:{
 		struct kvm_page_pol **act;
 		printk(KERN_INFO "kvm_vm_ioctl");
-		//act = kmalloc(sizeof(struct kvm_page_pol),GFP_USER);
-		if (copy_from_user(act, argp , sizeof(act)))
+		act = (struct kvm_page_pol **)kmalloc(sizeof(void **),GFP_KERNEL);
+		if (copy_from_user(act, argp , sizeof(void **)))
 			goto out;
 		//struct kvm_page_pol *app = kmalloc(sizeof(struct kvm_page_pol),GFP_USER);
 		
