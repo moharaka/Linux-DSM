@@ -60,9 +60,9 @@
 #include "async_pf.h"
 #include "vfio.h"
 
-/*
-#include "../../arch/x86/kvm/dsm-util.c"*/
-#include "../../arch/x86/kvm/dsm-util.h"
+//
+#include "policies.c"
+//
 
 
 #define CREATE_TRACE_POINTS
@@ -2543,8 +2543,6 @@ static int kvm_vcpu_ioctl_set_sigmask(struct kvm_vcpu *vcpu, sigset_t *sigset)
 	return 0;
 }
 
-//on trouve pour un gpn donné la politique à appliquer
-
 
 static long kvm_vcpu_ioctl(struct file *filp,
 			   unsigned int ioctl, unsigned long arg)
@@ -2982,55 +2980,6 @@ static long kvm_vm_ioctl_check_extension_generic(struct kvm *kvm, long arg)
 }
 
 
-//
-void kvm_apply_policy(struct kvm *kvm, struct kvm_page_pol **act){	
-	
-	struct kvm_dsm_memslots *slots;
-	struct kvm_dsm_memory_slot *slot;
-	struct kvm_dsm_info *info;
-
-	int i, j, k, N;
-	printk(KERN_INFO "ON ENTRE DANS LA FONCTION");
-
-	slots = __kvm_hvaslots(kvm);
-	printk(KERN_INFO "A- slots->used_slots = [%d]\n", slots->used_slots);
-	printk(KERN_INFO "AU Départ len = (%d) , gpn = [%lu] et politique = {%c}",(*act)->len, (*act)->gpn, (*act)->pol);
-	
-	j = 0;k = 0;i = 0;
-
-	if (slots->used_slots != 0 && (*act)->len >0){
-		
-		while (i < (*act)->len){
-			bool flag = false;
-			printk(KERN_INFO "structure i = (%d) de gpn [%lu] et de politique {%c}",i,(*act+i)->gpn,(*act+i)->pol);
-			while (!flag && j < slots->used_slots) {
-				slot = &slots->memslots[j];
-				N = slot->npages;
-				long list_gpn[N];
-				while (k < N) {
-					info = &slot->vfn_dsm_state[k];
-		
-					list_gpn[k] = __kvm_dsm_vfn_to_gfn(slot, false,slot->base_vfn + k, 0, NULL);
-
-					if (list_gpn[k] == (*act+i)->gpn){
-						printk(KERN_INFO "pour le slot j = (%d) , match (%lu)",j,(*act+i)->gpn);
-						info->policy = (*act+i)->pol;
-				
-						printk(KERN_INFO "\tgfn\tpol\n");
-						printk(KERN_INFO "\t[%llu]; \t %c;",list_gpn[k], info->policy);
-						printk(KERN_INFO "***************");
-						flag = true;
-						}
-					k = k + 1;
-					}
-				j = j + 1 ;
-				}
-			i = i + 1;
-			}
-	}				
-}
-//
-
 
 static long kvm_vm_ioctl(struct file *filp,
 			   unsigned int ioctl, unsigned long arg)
@@ -3046,15 +2995,22 @@ static long kvm_vm_ioctl(struct file *filp,
 	switch (ioctl) {
 
 	case KVM_PAGE_POLICY:{
-		struct kvm_page_pol **act;
+		page_pol_t *act;
 		printk(KERN_INFO "kvm_vm_ioctl");
-		act = (struct kvm_page_pol **)kmalloc(sizeof(void **),GFP_KERNEL);
-		if (copy_from_user(act, argp , sizeof(void **)))
+		act = kzalloc(sizeof(page_pol_t),GFP_KERNEL);
+		if (copy_from_user(act, argp , sizeof(page_pol_t)))
 			goto out;
-		//struct kvm_page_pol *app = kmalloc(sizeof(struct kvm_page_pol),GFP_USER);
+		page_pol_t *tmp, *pel;
+		tmp = act;
+		pel = argp;
+		while(tmp !=NULL){
+			if (copy_from_user(tmp, pel , sizeof(page_pol_t)))
+				goto out;
+			tmp = tmp->next;
+			pel = pel->next;}
 		
 		kvm_apply_policy(kvm, act);
-		
+		//kfree(act);
 		r = 0;
 		break;
 	}	
