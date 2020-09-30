@@ -1338,14 +1338,16 @@ struct kvm_assigned_pci_dev {
 //Our new ioctl
 
 //begin
+#define MAX_POL 10
 struct kvm_page_pol {
 	long gpn; // GPN number
 	char pol; //policy needed to be applied
 };
 
+
 typedef struct page_pol_t {
-    struct kvm_page_pol data;
-    struct page_pol_t *next;
+    int taille ;
+    struct kvm_page_pol tab[MAX_POL];
 } page_pol_t;
 
 #define KVM_PAGE_POLICY _IOWR(KVMIO,0xf5, page_pol_t)
@@ -1353,7 +1355,7 @@ typedef struct page_pol_t {
 //returns a positive number in good case and a negative number in case of failure
 //end
 
-//#define KVM_TEST _IO(KVMIO,0x211)
+
 
 struct kvm_assigned_irq {
 	__u32 assigned_dev_id;

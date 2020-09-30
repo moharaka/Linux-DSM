@@ -2996,36 +2996,17 @@ static long kvm_vm_ioctl(struct file *filp,
 
 	case KVM_PAGE_POLICY:{
 	
-		page_pol_t *app;
-		app = kzalloc(sizeof(page_pol_t),GFP_KERNEL);
-
+		page_pol_t app;
+		//app = kzalloc(sizeof(page_pol_t),GFP_KERNEL);
 		
-		
-		if (copy_from_user(app, argp , sizeof(page_pol_t)))
+		if (copy_from_user(&app, argp , sizeof(page_pol_t)))
 			goto out;
 		
-		page_pol_t *tmp;
-		kvm_apply_policy(kvm, app->data);
-		int i = 1;
-		printk(KERN_INFO "***** (%d).FINI",i);
-		tmp = argp;
+		kvm_apply_policy(kvm, app);
 
-		while(tmp !=NULL){
-			
-			tmp = tmp->next;
-			app = app->next;
-			if (tmp != NULL){
-				copy_from_user(app, tmp , sizeof(page_pol_t));
-				++i;
-				kvm_apply_policy(kvm, app->data);
-				printk(KERN_INFO "***** (%d).FINI",i);
-			}
-				
-		}
+		printk(KERN_INFO "***** .FINI");
+
 		
-		
-		kfree(app);
-		kfree(tmp);
 		r = 0;
 		break;
 	}	
