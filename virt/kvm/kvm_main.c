@@ -3000,21 +3000,17 @@ static long kvm_vm_ioctl(struct file *filp,
 		act = kzalloc(sizeof(page_pol_t),GFP_KERNEL);
 		if (copy_from_user(act, argp , sizeof(page_pol_t)))
 			goto out;
-		page_pol_t *pel;
-		//tmp = act;
+		page_pol_t *tmp, *pel;
+		tmp = act;
 		pel = argp;
-		while(act !=NULL){
-			kvm_apply_policy(kvm, act);
-			
-			act = act->next;
-			pel = pel->next;
-			if (copy_from_user(act, pel , sizeof(page_pol_t)))
+		while(tmp !=NULL){
+			if (copy_from_user(tmp, pel , sizeof(page_pol_t)))
 				goto out;
-		}
+			tmp = tmp->next;
+			pel = pel->next;}
 		
-		
-		kfree(act);
-		kfree(pel);
+		kvm_apply_policy(kvm, act);
+		//kfree(act);
 		r = 0;
 		break;
 	}	
