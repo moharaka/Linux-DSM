@@ -3004,7 +3004,7 @@ static long kvm_vm_ioctl(struct file *filp,
 		
 		kvm_apply_policy(kvm, app);
 
-		printk(KERN_INFO "***** .FINI");
+		printk(KERN_INFO "*****-- Finish");
 
 		
 		r = 0;
