@@ -157,20 +157,42 @@ retry:
 done:
 	return ret;
 }
-
+int update_local(struct kvm *kvm,bool is_smm,gfn_t gfn,unsigned long gpa,long size,unsigned long var_data){
+	struct kvm_memory_slot *memslot;
+	struct kvm_dsm_memory_slot *slot;
+	hfn_t vfn;
+	int idx;
+	unsigned long data_to_print;
+	idx = srcu_read_lock(&kvm->srcu);
+	int lock_int = kvm_dsm_acquire_page(kvm,&memslot,gfn,0);
+	int result_write = kvm_write_guest_page_nonlocal(kvm,memslot,gfn,&(var_data),(gpa % PAGE_SIZE),size);
+	if(result_write  < 0){
+		srcu_read_unlock(&kvm->srcu, idx);
+		kvm_dsm_release_page(kvm,memslot,gfn);
+		return result_write;
+	}else{
+		srcu_read_unlock(&kvm->srcu, idx);	
+	//lock rel
+		kvm_dsm_release_page(kvm,memslot,gfn);
+		return 0;
+	}
+}
 /*
  * purpose : this function sends a broadcast request to propagate a variable modification 
  * the arguments are in that order from var_gpa : the variable gpa, the variable gva, the var size, and the data, which shall be written.
  * result : 0 if everything went well, and a negative number if not
  */
-int send_upd_request(struct kvm *kvm, phys_addr_t var_gpa, long var_size,long var_datas){
+int send_upd_request(struct kvm *kvm, phys_addr_t var_gpa, long var_size,unsigned long var_datas){
+
 	int dest_id; //dest id
 	int ret = 0; //return value
+	//int ret1 = 0;	
 	char r = 1;
 	struct dsm_response resp;
 	/*
 	 * we a re going to send datas to these other nodes
 	 */
+	update_local(kvm,true,gpa_to_gfn(var_gpa),var_gpa,var_size, var_datas);
 	for(dest_id=0; dest_id < kvm->arch.cluster_iplist_len; dest_id++){
       		struct dsm_request req = {
 			.req_type = DSM_REQ_UPDATE,
@@ -188,15 +210,9 @@ int send_upd_request(struct kvm *kvm, phys_addr_t var_gpa, long var_size,long va
 		BUG_ON(dest_id >= kvm->arch.cluster_iplist_len);
 		ret = kvm_dsm_fetch(kvm, dest_id, false, &req, &r, &resp);
 		if (ret < 0){
-			printk(KERN_INFO "in function send upd update we had a pb; returned %d, and the ip list length is %d", ret,kvm->arch.cluster_iplist_len);
 			return ret;
 		}
-			
-		printk(KERN_INFO "kvm[%d] sent request update to kvm[%d] req_type[%s] gfn[%llu,%ld] and the data for update is %ld",
-			kvm->arch.dsm_id, dest_id, req_desc[req.req_type],
-			req.gfn, req.size,req.var_data);
 	}
-
 	return 0;
 }
 /*
@@ -292,38 +308,13 @@ static int dsm_handle_send_upd_req(struct kvm *kvm, kconnection_t *conn_sock,
 		const struct dsm_request *req, bool *retry, hfn_t vfn, char *page,
 		tx_add_t *tx_add){
 		long data_to_print;
-//TODO RECUPERER LES PARAMS, TRANSFORMER LA GPA EN HVA, SOIT VFN, PROTEGER LA PAGE EN LECTURE, ECRIRE SUR LA PAGE ET FAIRE LE FEEDBACK
-printk(KERN_INFO "in handle send upd : here is the request type and gfn : %s",req_desc[req->req_type]);
-printk(KERN_INFO "Jiffies udpate has been captured");
-printk(KERN_WARNING "kvm[%d] a recu une requête  req_type[%s] gfn-vfn[%llu,%llu], the gva is : %lu the size is %ld and the data for update is %ld",kvm->arch.dsm_id, req_desc[req->req_type],req->gfn,vfn,req->gpa, req->size,req->var_data);
-	//TODO recuperer l'offset mettre à la place de zero et régler le problème de -14
 	int result_write = kvm_write_guest_page_nonlocal(kvm,memslot,req->gfn,&(req->var_data),(req->gpa % PAGE_SIZE),  req->size);
-	printk(KERN_INFO "%s function : there is the result of writing %d",__func__,result_write);
 	if(result_write  < 0){
-		printk(KERN_INFO "%s function : DSM writing guest page non local failed",__func__);
 		return result_write;
 	}else{
-		printk(KERN_INFO "%s function : data written in the memory with kvm_write_guest_nonlocal");
-		printk(KERN_INFO "%s function : reading attempt to the memory");
 		int result_read = kvm_read_guest_page_nonlocal(kvm,memslot,req->gfn,&data_to_print,(req->gpa % PAGE_SIZE),  req->size);
-		printk(KERN_INFO "%s function : there is the result of reading %d",__func__,result_read);
-		printk(KERN_WARNING "the stored jiffies value is %lu",data_to_print);
 		return 0;
 	}
-	
-	/*if(kvm_dsm_acquire(kvm,&slots, gfn_to_gpa(req->gfn), req->size,false) < 0){
-		printk(KERN_INFO "dsm acquire failed");
-		return -1;		
-	}else {
-		printk(KERN_INFO "dsm acquire done");
-		//TODO write in the guest page then release
-                if(kvm_write_guest(kvm, gfn_to_gpa(req->gfn),req->var_data, req->size)> 0){
-			printk(KERN_INFO "in %s, the data : %llu has been writen in gpa : %llu",__func__,req->var_data,gfn_to_gpa(req->gfn));
-			goto out;
-		kvm_dsm_release(kvm, slots, gfn_to_gpa(req->gfn), req->size);
-		printk(KERN_INFO "dsm release done");
-		return 0;
-	}*/
 }
 
 static int dsm_handle_write_req(struct kvm *kvm, kconnection_t *conn_sock,
