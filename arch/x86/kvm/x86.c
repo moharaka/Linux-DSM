@@ -6193,10 +6193,15 @@ int kvm_emulate_hypercall(struct kvm_vcpu *vcpu)
 		/*
 			a0 gpa of jiffies
 			a1 var size
-			a2 jiffies value		
+			a2 jiffies old value,
+			a3 ticks		
 		*/
-		printk(KERN_INFO "data captured in hypercall KVM_HC_ATOMIC_INC \ngpa : %llu\nvar size : %dvar_value : %lu",a0,a1,a2,a3);
-		ret = send_upd_request(vcpu->kvm, a0, a1, a2);
+		printk(KERN_INFO "data captured in hypercall KVM_HC_ATOMIC_INC \ngpa : %llu\nvar size : %d\nvar_value : %lu\nticks : %lu",a0,a1,a2,a3);
+		//unsigned long jiffies_new_value;
+		//TODO ecrire sur la memoire sur cet hôte
+		send_upd_request(vcpu->kvm, a0, a1, a2+a3);
+		ret = 0;	
+		printk(KERN_INFO "HYPERCALL TERMINATION");	
 		break;
 	default:
 		ret = -KVM_ENOSYS;
