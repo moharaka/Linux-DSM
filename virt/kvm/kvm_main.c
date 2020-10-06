@@ -2995,18 +2995,13 @@ static long kvm_vm_ioctl(struct file *filp,
 	switch (ioctl) {
 
 	case KVM_PAGE_POLICY:{
-	
 		page_pol_t app;
-		//app = kzalloc(sizeof(page_pol_t),GFP_KERNEL);
 		
 		if (copy_from_user(&app, argp , sizeof(page_pol_t)))
 			goto out;
 		
 		kvm_apply_policy(kvm, app);
 
-		printk(KERN_INFO "*****-- Finish");
-
-		
 		r = 0;
 		break;
 	}	
