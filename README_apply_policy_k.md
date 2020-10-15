@@ -7,8 +7,8 @@
 
 ## Implementation 
 
+We implement our ioctl in the host as in the userspace QEMU. That work is done in the  kvm.h file in Linux-DSM/include/uapi/linux directory.
 Our work in this part is divided into 02 steps.
-
 
 4. **Ioctl is captured by KVM** 
  Vm system calls can be captured in this following function which can be found in the folder /Linux-DSM/virt/kvm
