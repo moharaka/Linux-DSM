@@ -22,7 +22,7 @@
   ### The Hypercall
    The hypercall should be done inside the guest VM. 
    
-   The first thing was to define the Hypercall number inside the hest and the host. in the two kernels, we have found the file : 
+   The first thing was to define the Hypercall number inside the guest and the host. in the two kernels, we have found the file : 
    *include/uapi/linux/kvm_para.h*.
    then inserted the line
    
